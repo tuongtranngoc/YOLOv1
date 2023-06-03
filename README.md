@@ -1,2 +1,1 @@
-# YOLOv1
-YOLOv1 implementation using PyTorch framework
+# This project aims to implement YOLOV1 algorithm

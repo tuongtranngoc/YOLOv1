@@ -1,0 +1,35 @@
+########################### Network ######################
+"S": 7
+"B": 2
+"C": 20
+
+########################### Augmentation ######################
+"image_size": [448, 448]
+"scale_range": [320, 416]
+"p_random_scale": 1
+"ratio_shift": 0.2
+"crop_size": 224
+"p_translate": 1
+"s_factor": 1.5
+"h_factor": 1
+"v_factor": 1.5
+"p_hsv": 1
+
+########################### Training ######################
+"VOC":
+  "image_path": 'dataset/VOC2012/JPEGImages'
+  "anno_path": 'dataset/VOC2012/Annotations'
+  "txt_train_path": 'dataset/VOC2012/ImageSets/Main/train.txt'
+  "txt_val_path": 'dataset/VOC2012/ImageSets/Main/val.txt'
+"epochs": 2000
+
+########################### Debugging ######################
+"tensorboard_debug": "exps/zcode1-exp1/tensorboard"
+"decode_yolo_debug": "exps/zcode1-exp1/tensorboard"
+"training_debug": "exps/zcode1-exp1/training"
+"dataset_debug": "exps/zcode1-exp1/dataset"
+"valid_debug": "exps/zcode1-exp1/valid"
+"last_ckpt_path": "weights/last.pt"
+"best_ckpt_path": "weights/best.pt"
+"conf_debug": 0.3
+
