@@ -9,5 +9,5 @@ def get_config(yaml_pth='config.yml'):
 
     return config
 
-CFG_PATH = 'zcode1/config/config.yml'
+CFG_PATH = 'src/config/config.yml'
 CFG = get_config(CFG_PATH)

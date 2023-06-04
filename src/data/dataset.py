@@ -56,7 +56,7 @@ class BaseDatset(Dataset):
         id_map = json.load(open('dataset/VOC2012/label_to_id.json'))
         image_ids = open(txt_file).read().strip().split('\n')
         
-        for im_id in tqdm(image_ids, desc="Parsing VOC data ..."):
+        for im_id in tqdm(image_ids[:8], desc="Parsing VOC data ..."):
             anno_path = os.path.join(anno_dir, im_id + '.xml')
             anno = EasyDict(xmltodict.parse(open(anno_path).read())).annotation
             image_path = os.path.join(image_dir, anno.filename)

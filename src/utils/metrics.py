@@ -1,30 +1,9 @@
-from collections import defaultdict
-from easydict import EasyDict
 import numpy as np
 
-class BatchMetric:
-    def __init__(self) -> None:
-        self.metrics = defaultdict(list)
-
-    def update(self, n=1, **kwargs):
-        for k, v in kwargs.items():
-            if not isinstance(v, list):
-                v = [v]
-                self.metrics[k].extend(v)
-    
-    def compute(self, kind='mean'):
-        output = EasyDict()
-        if kind =='mean':
-            for k, v in self.metrics.items():
-                output[k] = np.mean(v)
-
-        return output
-    
 
 class BatchMeter(object):
-    def __init__(self, name, summary_type=None) -> None:
+    def __init__(self, name) -> None:
         self.name = name
-        self.summary_type = summary_type
         self.reset()
 
     def reset(self):
@@ -39,13 +18,13 @@ class BatchMeter(object):
         self.count += n
         self.avg = self.sum / self.count
     
-    def get_value(self):
-        if self.summary_type == 'mean':
+    def get_value(self, summary_type=None):
+        if summary_type == 'mean':
             return self.avg
-        elif self.summary_type == 'sum':
+        elif summary_type == 'sum':
             return self.sum
         else:
-            raise Exception(f'{self.summary_type} must be mean/sum')
+           return self.value
         
 
 if __name__ == "__main__":

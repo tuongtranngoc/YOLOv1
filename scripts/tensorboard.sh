@@ -1,1 +1,1 @@
-tensorboard --logdir exps/zcode1-exp1/tensorboard --port 1234
+tensorboard --logdir exps/tensorboard --port 1234

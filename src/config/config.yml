@@ -22,14 +22,19 @@
   "txt_train_path": 'dataset/VOC2012/ImageSets/Main/train.txt'
   "txt_val_path": 'dataset/VOC2012/ImageSets/Main/val.txt'
 "epochs": 2000
+"bz_train": 8
+"bz_valid": 4
+"n_workers": 8
+"iou_thresh": 0.3
 
 ########################### Debugging ######################
-"tensorboard_debug": "exps/zcode1-exp1/tensorboard"
-"decode_yolo_debug": "exps/zcode1-exp1/tensorboard"
-"training_debug": "exps/zcode1-exp1/training"
-"dataset_debug": "exps/zcode1-exp1/dataset"
-"valid_debug": "exps/zcode1-exp1/valid"
+"tensorboard_debug": "exps/tensorboard"
+"decode_yolo_debug": "exps/tensorboard"
+"training_debug": "exps/training"
+"dataset_debug": "exps/dataset"
+"valid_debug": "exps/valid"
 "last_ckpt_path": "weights/last.pt"
 "best_ckpt_path": "weights/best.pt"
 "conf_debug": 0.3
+"idxs_debug": [0, 1, 2, 3, 4, 5, 6, 7]
 

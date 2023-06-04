@@ -21,27 +21,16 @@ class SumSquaredError(nn.Module):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def forward(self, gt, pred):
+        bz = gt.size(0)
         S = self.cfg['S']
         B = self.cfg['B']
         C = self.cfg['C']
-        gt_bboxes, gt_conf, gt_cls = Decode.reshape_data(gt)
-        pred_bboxes, pred_conf, pred_cls = Decode.reshape_data(pred)
+        gt_bboxes, gt_conf, gt_cls = BoxUtils.reshape_data(gt)
+        pred_bboxes, pred_conf, pred_cls = BoxUtils.reshape_data(pred)
         
         one_obj_ij = (gt_conf[..., 0] == 1)
         one_obj_i = (gt_conf[..., 0] == 1)[..., 0]
         one_noobj_ij = ~one_obj_ij
-
-        # Calculate iou and find best prediction for each GT
-        # ious = compute_iou(gt_bboxes, pred_bboxes, S, self.device)
-        # max_ious, max_idxs = torch.max(ious, dim=-1)
-        
-        # obj_conf_gt = gt_conf.clone()
-        # obj_conf_gt[..., 0, :][..., 0][max_idxs==0] = max_ious[max_idxs==0]
-        # obj_conf_gt[..., 1, :][..., 0][max_idxs==1] = max_ious[max_idxs==1]
-
-        # Compute losses
-        # xy_loss = self.mse_loss_fn(pred_bboxes[..., :2][one_obj_ij], gt_bboxes[..., :2][one_obj_ij])
-        # wh_loss = self.mse_loss_fn(pred_bboxes[one_obj_ij][..., 2:], gt_bboxes[one_obj_ij][..., 2:])
 
         box_loss = self.mse_loss_fn(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 
@@ -55,4 +44,4 @@ class SumSquaredError(nn.Module):
 
         conf_loss = (self.lambda_noobj * noobj_loss + obj_loss)
 
-        return box_loss, conf_loss, cls_loss
+        return box_loss / bz, conf_loss / bz, cls_loss / bz

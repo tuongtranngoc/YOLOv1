@@ -1,4 +1,5 @@
 import torch
+import torchvision
 import numpy as np
 
 from ..config import CFG as cfg
@@ -7,8 +8,8 @@ from ..data.utils import Unnormalize
 
 def compute_iou(target, pred, device):
     eps = 1e-6
-    x = Decode.decode_yolo(target[..., :4], device)
-    y = Decode.decode_yolo(pred[..., :4], device)
+    x = BoxUtils.decode_yolo(target[..., :4], device)
+    y = BoxUtils.decode_yolo(pred[..., :4], device)
     x1 = torch.max(x[..., 0], y[..., 0])
     y1 = torch.max(x[..., 1], y[..., 1])
     x2 = torch.min(x[..., 2], y[..., 2])
@@ -18,7 +19,7 @@ def compute_iou(target, pred, device):
     ious = intersects / (unions + eps)
     return ious
 
-class Decode:
+class BoxUtils:
     S = cfg['S']
     B = cfg['B']
     C = cfg['C'] 
@@ -59,7 +60,7 @@ class Decode:
             raise Exception(f"{data} is a type of {type(data)}, not numpy/tensor type")
     
     @classmethod
-    def image_to_numpy(image):
+    def image_to_numpy(cls, image):
         if isinstance(image, torch.Tensor):
             image = image.squeeze().detach().cpu().numpy()
             image = image.transpose((1, 2, 0))
@@ -70,4 +71,13 @@ class Decode:
             return image
         else:
             raise Exception(f"{image} is a type of {type(image)}, not numpy/tensor type")
+        
+    @classmethod
+    def nms(self, pred_bboxes, pred_confs, pred_cls, iou_thresh):
+        idxs = torchvision.ops.nms(pred_bboxes, pred_confs, iou_thresh)
+        nms_bboxes = pred_bboxes[idxs]
+        nms_confs = pred_confs[idxs]
+        nms_classes = pred_cls[idxs]
+
+        return nms_bboxes, nms_confs, nms_classes
 
