@@ -84,7 +84,8 @@ class Debuger:
         self.C = cfg['C']
         self.save_debug_path = save_debug_path
 
-    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, epoch, with_tsboard=False):
+    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh):
+        os.makedirs(f'{self.save_debug_path}/{type_infer}', exist_ok=True)
         model.eval()
         images, targets = [], []
         for index in idxs:
@@ -139,27 +140,14 @@ class Debuger:
 
             image = BoxUtils.image_to_numpy(images[i])
 
-            if not with_tsboard:
-                for pred_box, pred_cls, pred_conf in zip(pred_bb_noobj, pred_cls_noobj, pred_conf_noobj):
-                    if pred_conf[0] > conf_thresh:
-                        image = Drawer(image, False, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
+            for pred_box, pred_cls, pred_conf in zip(pred_bb_noobj, pred_cls_noobj, pred_conf_noobj):
+                if pred_conf[0] > conf_thresh:
+                    image = Drawer(image, False, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
 
-                for gt_box, gt_cls, gt_conf in zip(gt_bboxes, gt_cls, gt_conf):
-                    image = Drawer(image, True, 'gt').draw_box_label(gt_box, gt_conf[0], gt_cls)
+            for gt_box, gt_cls, gt_conf in zip(gt_bboxes, gt_cls, gt_conf):
+                image = Drawer(image, True, 'gt').draw_box_label(gt_box, gt_conf[0], gt_cls)
 
-                for pred_box, pred_cls, pred_conf in zip(pred_bb_obj, pred_cls_obj, pred_conf_obj):
-                    image = Drawer(image, True, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
+            for pred_box, pred_cls, pred_conf in zip(pred_bb_obj, pred_cls_obj, pred_conf_obj):
+                image = Drawer(image, True, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
 
-                cv2.imwrite(f'{self.save_debug_path}/{type_infer}/{i}.png', image)
-            
-            else:
-                bboxes = pred_bb_noobj + pred_bb_obj
-                bboxes = np.array([b * 448 for b in bboxes])
-                classes = pred_cls_noobj + pred_cls_obj
-                id_map = json.load(open('dataset/VOC2012/label_to_id.json'))
-                id2classes = {
-                    id_map[k]: k
-                    for k in id_map.keys()
-                }
-                labels = [id2classes[i+1] for i in classes]
-                Tensorboard.add_debug_images(os.path.join(type_infer, str(i)), image, bboxes, labels, epoch)
+            cv2.imwrite(f'{self.save_debug_path}/{type_infer}/{i}.png', image)

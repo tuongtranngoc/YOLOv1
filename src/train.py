@@ -31,16 +31,12 @@ class Trainer:
     def create_dataloader(self):
         self.train_dataset = YoloDatset(self.cfg['VOC']['image_path'], self.cfg['VOC']['anno_path'], self.cfg['VOC']['txt_train_path'])
         self.val_dataset = YoloDatset(self.cfg['VOC']['image_path'], self.cfg['VOC']['anno_path'], self.cfg['VOC']['txt_val_path'])
-        print("Creating dataloader ...")
-        self.train_loader = DataLoader(self.train_dataset, batch_size=8, shuffle=True, num_workers=8)
-        self.val_loader = DataLoader(self.val_dataset, batch_size=4, shuffle=False, num_workers=8)
+        self.train_loader = DataLoader(self.train_dataset, batch_size=self.cfg['bz_train'], shuffle=True, num_workers=self.cfg['n_workers'])
+        self.val_loader = DataLoader(self.val_dataset, batch_size=self.cfg['bz_valid'], shuffle=False, num_workers=self.cfg['n_workers'])
 
     def create_model(self):
-        print("Creating model ...")
         self.model = YOLOv1().to(self.device)
-        print("Creating loss function ...")
         self.loss_fn = SumSquaredError().to(self.device)
-        print("Creating optimzer ...")
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-3, amsgrad=True)
         self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=30)
 
@@ -72,17 +68,17 @@ class Trainer:
                     box_loss: {mt_box_loss.get_value(): .5f}, \
                         conf_loss: {mt_conf_loss.get_value():.5f}, \
                             class_loss: {mt_cls_loss.get_value():.5f}', end='\r')
-                self.eval.evaluate()
+                
+                Tensorboard.add_scalars('train', epoch, box_loss=mt_box_loss.get_value(), \
+                                                         conf_loss=mt_conf_loss.get_value(), \
+                                                         cls_loss=mt_cls_loss.get_value())
             
             # Debug image at each training time
             with torch.no_grad():
-                self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'], epoch, False)
-                self.debuger.debug_output(self.val_dataset, self.cfg['idxs_debug'], self.model, 'val', self.device, self.cfg['conf_debug'], epoch, False)
+                self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'])
+                self.debuger.debug_output(self.val_dataset, self.cfg['idxs_debug'], self.model, 'val', self.device, self.cfg['conf_debug'])
             
-            Tensorboard.add_scalers('train', epoch, box_loss=mt_box_loss.get_value('mean'), \
-                                                    conf_loss=mt_conf_loss.get_value('mean'), \
-                                                    cls_loss=mt_cls_loss.get_value('mean'))
-            print(f"TRAIN: box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_box_loss.get_value('mean'): .5f}, class_loss: {mt_box_loss.get_value('mean'): .5f}")
+            print(f"TRAIN - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_box_loss.get_value('mean'): .5f}, class_loss: {mt_box_loss.get_value('mean'): .5f}")
         
     def save_ckpt(self, save_path):
         ckpt_dict = {

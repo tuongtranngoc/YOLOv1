@@ -29,7 +29,7 @@
 
 ########################### Debugging ######################
 "tensorboard_debug": "exps/tensorboard"
-"decode_yolo_debug": "exps/tensorboard"
+"decode_yolo_debug": "exps/decode_yolo"
 "training_debug": "exps/training"
 "dataset_debug": "exps/dataset"
 "valid_debug": "exps/valid"

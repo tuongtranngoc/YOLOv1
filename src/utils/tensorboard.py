@@ -8,7 +8,7 @@ class Tensorboard:
     writer = SummaryWriter(outdir)
     
     @classmethod
-    def update_metric(cls, tag, step, **kwargs):
+    def add_scalars(cls, tag, step, **kwargs):
         for k, v in kwargs.items():
             cls.writer.add_scalar(f'{tag}/{k}', v, step)
     
