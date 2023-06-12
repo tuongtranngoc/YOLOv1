@@ -63,14 +63,13 @@ class BaseDatset(Dataset):
             if type(anno.object) is not list:
                 anno.object = [anno.object]
             bboxes = []
-
+        
             for item in anno.object:
                 box = item.bndbox
                 box = [box.xmin, box.ymin, box.xmax, box.ymax]
                 box_info = [id_map[item.name]] + [eval(c) for c in box]
                 bboxes.append(box_info)
             dataset.append([image_path, np.array(bboxes, dtype=np.float32)])
-
         return dataset
 
 

@@ -4,8 +4,6 @@ from ..data.utils import *
 from .torch_utils import *
 from ..data import CFG as cfg
 
-from .tensorboard import Tensorboard
-
 
 def class2color(class_name):
     VOC_CLASS2COLOR = {
@@ -88,6 +86,7 @@ class Debuger:
         os.makedirs(f'{self.save_debug_path}/{type_infer}', exist_ok=True)
         model.eval()
         images, targets = [], []
+        #targets = targets.permute(0, 2, 1, 3)
         for index in idxs:
             image, target = dataset[index]
             images.append(image)
@@ -95,11 +94,12 @@ class Debuger:
 
         targets = torch.stack(targets, dim=0).to(device)
         images = torch.stack(images, dim=0).to(device)
-
+        
         bgt_bboxes, bgt_conf, bgt_cls = BoxUtils.reshape_data(targets)
         bgt_bboxes = BoxUtils.decode_yolo(bgt_bboxes, device)
         
         pred = model(images)
+        #pred = pred.permute(0, 2, 1, 3)
         bpred_bboxes, bpred_conf, bpred_cls = BoxUtils.reshape_data(pred)
         bpred_bboxes = BoxUtils.decode_yolo(bpred_bboxes, device)
 

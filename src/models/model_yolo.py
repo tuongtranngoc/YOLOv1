@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from ..data import CFG as cfg
-from .model_base import GlobalAvgPool2d, Flatten, Conv_BatchNorm_LRelu
+from .model_base import GlobalAvgPool2d, Conv_BatchNorm_LRelu
 
 S = cfg['S']
 B = cfg['B']
@@ -69,7 +69,7 @@ class HEAD(nn.Module):
         )
 
         self.detect = nn.Sequential(
-            Flatten(),
+            nn.Flatten(),
             nn.Linear(7 * 7 * 1024, 4096),
             nn.LeakyReLU(0.01, inplace=True),
             nn.Dropout(0.5),

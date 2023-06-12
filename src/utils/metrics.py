@@ -11,7 +11,7 @@ class BatchMeter(object):
         self.sum = 0
         self.value = 0
         self.count = 0
-
+    
     def update(self, value, n=1):
         self.value = value
         self.sum += value * n
@@ -25,11 +25,3 @@ class BatchMeter(object):
             return self.sum
         else:
            return self.value
-        
-
-if __name__ == "__main__":
-    metric = BatchMeter('box_loss', 'sum')
-    for _ in range(1000):
-        metric.update(np.random.randint(1, 10e3))
-        print(metric.get_value())
-    print(metric.get_value())

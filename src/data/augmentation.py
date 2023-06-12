@@ -1,9 +1,11 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
+from typing import Any
 
 import cv2
 import numpy as np
+import albumentations as A
 
 from .utils import *
 
@@ -41,7 +43,6 @@ class Translation:
             bboxes[:, 2:] += [shift_x*w, shift_y*h]
             bboxes[:, :2] = np.maximum([2, 2], bboxes[:, :2])
             bboxes[:, 2:] = np.minimum([w-2, h-2], bboxes[:, 2:])
-            bboxes = check_bboxes(bboxes)
         return image, bboxes
 
 
@@ -70,4 +71,24 @@ class HSV:
 
             image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR, dst=image).astype(np.float32)
         return image
+    
 
+class AlbumAug:
+    def __init__(self) -> None:
+        self.transform = A.Compose([
+            A.BBoxSafeRandomCrop(p=0.3),
+            A.HorizontalFlip(p=0.5),
+            A.Affine(p=0.3),
+            A.ShiftScaleRotate(p=0.2, rotate_limit=15),
+            # A.RandomBrightnessContrast(p=0.5),
+            #A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=0.3),
+            ],
+        bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'], min_visibility=0.2),
+        )
+    
+    def __call__(self, image, bboxes, labels):
+        transformed = self.transform(image=image, bboxes=bboxes, labels=labels)
+        transformed_image = transformed['image'] 
+        transformed_bboxes = np.array(transformed['bboxes'], dtype=np.float32)
+        transformed_labels = transformed['labels']
+        return transformed_image, transformed_bboxes, transformed_labels

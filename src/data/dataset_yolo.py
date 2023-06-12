@@ -14,31 +14,25 @@ import torch.nn.functional as F
 
 
 class YoloDatset(BaseDatset):
-    def __init__(self, image_path, label_path, txt_path, augment=False) -> None:
+    def __init__(self, image_path, label_path, txt_path, is_augment=False) -> None:
         self.cfg = CFG
         self.image_path = image_path    
         self.label_path = label_path
+        self.is_augment = is_augment
         self.txt_path = txt_path
-        self.augment = augment
+        self.aug = AlbumAug()
         self.image_size = self.cfg['image_size']
+        self.tranform = Transform(self.image_size)
         self.dataset_voc = self.load_dataset_voc_format(self.image_path, self.label_path, self.txt_path)
 
-    def agumentation(self, image, bboxes):
-        image, bboxes = RamdomScale(scale_range=self.cfg['scale_range'], crop_size=self.cfg['crop_size'])(image, bboxes, self.cfg['p_random_scale'])
-        image, bboxes = Translation(ratio_shift=self.cfg['ratio_shift'])(image, bboxes, self.cfg['p_translate'])
-        image = HSV(self.cfg['h_factor'], self.cfg['s_factor'], self.cfg['v_factor'])(image, self.cfg['p_hsv'])
-        return image, bboxes
-
-    def get_image_label(self, image_pth, bboxes):
+    def get_image_label(self, image_pth, bboxes, labels):
         image = cv2.imread(image_pth).astype(np.float32)
-        if self.augment:
-            image, bboxes = self.agumentation(image, bboxes)
-
-        image, bboxes = Resize(self.image_size)(image, bboxes)
-        normalized_image = Normalize()(image)
-        image_rgb = normalized_image.transpose((2, 0, 1))
-        image_tensor = torch.from_numpy(image_rgb)
-        return image_tensor, bboxes
+        if self.is_augment:
+            image, bboxes, labels = self.aug(image, bboxes, labels)
+        
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image, bboxes, labels = self.tranform(image, bboxes, labels)
+        return image, bboxes, labels
     
     def make_grid_cells(self, cls_ids, boxes):
         S = self.cfg['S'] 
@@ -60,8 +54,9 @@ class YoloDatset(BaseDatset):
             pos_i = int(x_c // grid_cell_i)
             pos_j = int(y_c // grid_cell_j)
 
-            if target_cxcywh[pos_i, pos_j, 9] == 1.0:
+            if target_cxcywh[pos_j, pos_i, 9] > 0 or target_cxcywh[pos_j, pos_i, 4] > 0:
                 continue
+
             # Each grid cell contains:
             #   bbox1: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
             #   bbox2: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
@@ -74,18 +69,17 @@ class YoloDatset(BaseDatset):
                 (y_c - (pos_j * grid_cell_j)) / grid_cell_j, 
                 np.sqrt((x_max - x_min) / self.image_size[0]), 
                 np.sqrt((y_max - y_min) / self.image_size[1])]).repeat(B)
-                
+    
             # Assign bboxes to each grid cell
             grid_cell = torch.cat([box, conf_cls, p_cls], dim=-1)
-
-            target_cxcywh[pos_i, pos_j, :] = grid_cell
+            target_cxcywh[pos_j, pos_i, :] = grid_cell
         
         return target_cxcywh
-
+    
     def __getitem__(self, index):
         image_path, labels = self.dataset_voc[index]
         cls_ids, bboxes = labels[:, 0], labels[:, 1:]
-        image, bboxes = self.get_image_label(image_path, bboxes)
+        image, bboxes, cls_ids = self.get_image_label(image_path, bboxes, cls_ids)
         target = self.make_grid_cells(cls_ids, bboxes)
         return image, target
 

@@ -6,6 +6,9 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensorV2
+
 
 def xywh2yolo(bbox, w, h):
     bbox = bbox.copy()
@@ -43,22 +46,23 @@ def check_bboxes(bb1, bb2):
     return bb2
         
 
-class Resize:
+class Transform:
     def __init__(self, image_size) -> None:
         self.image_size = image_size
+        self.transform = A.Compose([
+            A.Resize(self.image_size[0], self.image_size[1]),
+            A.Normalize(),
+            ToTensorV2(),
+        ],
+        bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'])
+        )
 
-    def __call__(self, image, bboxes):
-        bboxes = bboxes.copy()
-        h, w = image.shape[:2]
-        image = cv2.resize(image, (self.image_size[0], self.image_size[1]))
-        x_scale = self.image_size[0] / w
-        y_scale = self.image_size[1] / h
-        bboxes[:, 0] *= x_scale
-        bboxes[:, 1] *= y_scale
-        bboxes[:, 2] *= x_scale
-        bboxes[:, 3] *= y_scale
-        
-        return image, bboxes
+    def __call__(self, image, bboxes, labels):
+        transformed = self.transform(image=image, bboxes=bboxes, labels=labels)
+        transformed_image = transformed['image'] 
+        transformed_bboxes = np.array(transformed['bboxes'], dtype=np.float32)
+        transformed_labels = transformed['labels']
+        return transformed_image, transformed_bboxes, transformed_labels
     
 
 class RandomCrop:
@@ -78,7 +82,6 @@ class RandomCrop:
         bboxes[:, 1] = np.maximum(top, bboxes[:, 1]) - top
         bboxes[:, 2] = np.minimum(right, bboxes[:, 2]) - left
         bboxes[:, 3] = np.minimum(bottom, bboxes[:, 3]) - top
-        bboxes = check_bboxes(bboxes)
 
         return image, bboxes
 
@@ -87,11 +90,10 @@ class Normalize:
     def __init__(self, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) -> None:
         self.mean = np.array(mean, dtype=np.float32)
         self.std = np.array(std, dtype=np.float32)
-
+    
     def __call__(self, image):
-        image /= 255.
-        image -= self.mean
-        image /= self.std
+        image -= (self.mean * 255.)
+        image /= (self.std * 255.)
         return image
 
 
@@ -101,7 +103,6 @@ class Unnormalize:
         self.std = np.array(std, dtype=np.float32)
 
     def __call__(self, image):
-        image *= self.std
-        image += self.mean
-        image *= 255.
+        image *= (self.std * 255.)
+        image += (self.mean * 255.)
         return image

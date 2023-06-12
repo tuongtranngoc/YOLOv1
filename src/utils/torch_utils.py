@@ -1,3 +1,5 @@
+
+import cv2
 import torch
 import torchvision
 import numpy as np
@@ -29,7 +31,7 @@ class BoxUtils:
         bz = bboxes.size(0)
         idxs_i = torch.arange(cls.S)
         idxs_j = torch.arange(cls.S)
-        pos_i, pos_j = torch.meshgrid(idxs_i, idxs_j, indexing='ij')
+        pos_j, pos_i = torch.meshgrid(idxs_i, idxs_j, indexing='ij')
         pos_i = pos_i.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
         pos_j = pos_j.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
         pos_i = pos_i.to(device)
@@ -42,7 +44,7 @@ class BoxUtils:
         y2 = torch.clamp(yc + bboxes[..., 3] **2 / 2, max=1)
 
         return torch.stack((x1, y1, x2, y2) ,dim=-1)
-
+    
     @classmethod
     def reshape_data(cls,data):
         data_cls = data[..., 10:]
@@ -66,6 +68,7 @@ class BoxUtils:
             image = image.transpose((1, 2, 0))
             image = Unnormalize()(image)
             image = np.ascontiguousarray(image, np.uint8)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             return image
         elif isinstance(image, np.array):
             return image
