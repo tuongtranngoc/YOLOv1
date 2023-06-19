@@ -1,5 +1,5 @@
 ########################### Network ######################
-"S": 7
+"S": 14
 "B": 2
 "C": 20
 
@@ -17,17 +17,18 @@
 
 ########################### Training ######################
 "VOC":
-  "image_path": 'dataset/VOC2012/JPEGImages'
-  "anno_path": 'dataset/VOC2012/Annotations'
-  "txt_train_path": 'dataset/VOC2012/ImageSets/Main/train.txt'
-  "txt_val_path": 'dataset/VOC2012/ImageSets/Main/val.txt'
-  
+  "image_path": ['dataset/VOC/VOCdevkit/VOC2007/JPEGImages', 'dataset/VOC/VOCdevkit/VOC2012/JPEGImages']
+  "anno_path": ['dataset/VOC/VOCdevkit/VOC2007/Annotations', 'dataset/VOC/VOCdevkit/VOC2012/Annotations']
+  "txt_train_path": ['dataset/VOC/VOCdevkit/VOC2007/ImageSets/Main/train.txt', 'dataset/VOC/VOCdevkit/VOC2012/ImageSets/Main/train.txt']
+  "txt_val_path": ['dataset/VOC/VOCdevkit/VOC2007/ImageSets/Main/val.txt']
+
 "epochs": 200
-"eval_step": 10
+"eval_step": 5
 "bz_train": 24
 "bz_valid": 4
 "n_workers": 8
 "iou_thresh": 0.3
+"conf_thresh": 0.3
 
 ########################### Debugging ######################
 "tensorboard_debug": "exps/tensorboard"
@@ -35,9 +36,9 @@
 "training_debug": "exps/training"
 "dataset_debug": "exps/dataset"
 "valid_debug": "exps/valid"
+"prediction_debug": "exps/prediction"
 "last_ckpt_path": "src/weights/last.pt"
 "best_ckpt_path": "src/weights/best.pt"
 "conf_debug": 0.3
 "idxs_debug": [0, 1, 2, 3, 4, 5, 6, 7]
 "augmentation_debug": "exps/augmentation"
-

@@ -12,7 +12,8 @@ from src.utils.visualization import *
 
 from .data.utils import *
 from .utils.metrics import BatchMeter
-from .models.model_yolo import YOLOv1
+# from .models.model_yolo import YOLOv1
+from .models.modules.yolo import YoloModel
 from .utils.visualization import Debuger
 from .data.dataset_yolo import YoloDatset
 from .utils.losses import SumSquaredError
@@ -29,15 +30,15 @@ class Trainer:
         self.create_dataloader()
         self.debuger = Debuger(self.cfg['training_debug'])
         self.eval = VocEval(self.val_dataset, self.model, self.cfg['bz_valid'], False, self.cfg['n_workers'], False)
-
+    
     def create_dataloader(self):
-        self.train_dataset = YoloDatset(self.cfg['VOC']['image_path'], self.cfg['VOC']['anno_path'], self.cfg['VOC']['txt_train_path'], is_augment=False)
+        self.train_dataset = YoloDatset(self.cfg['VOC']['image_path'], self.cfg['VOC']['anno_path'], self.cfg['VOC']['txt_train_path'], is_augment=True)
         self.val_dataset = YoloDatset(self.cfg['VOC']['image_path'], self.cfg['VOC']['anno_path'], self.cfg['VOC']['txt_val_path'])
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.cfg['bz_train'], shuffle=True, num_workers=self.cfg['n_workers'], pin_memory=False)
         #self.val_loader = DataLoader(self.val_dataset, batch_size=self.cfg['bz_valid'], shuffle=False, num_workers=self.cfg['n_workers'])
 
     def create_model(self):
-        self.model = YOLOv1().to(self.device)
+        self.model = YoloModel(input_size=self.cfg['image_size'][0], backbone="vgg16", num_classes=self.cfg['C'], pretrained=True).to(self.device)
         self.loss_fn = SumSquaredError().to(self.device)
         self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
         self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [75, 105], gamma=0.1)
@@ -50,8 +51,6 @@ class Trainer:
             
             for bz, (images, labels) in enumerate(self.train_loader):
                 self.model.train()
-                self.optimizer.zero_grad()
-        
                 images = images.to(self.device)
                 labels = labels.to(self.device)
                 out = self.model(images)
@@ -59,6 +58,7 @@ class Trainer:
                 box_loss, conf_loss, class_loss = self.loss_fn(labels, out)
                 total_loss = box_loss + conf_loss + class_loss
                 
+                self.optimizer.zero_grad()
                 total_loss.backward()
                 self.optimizer.step()
 
@@ -98,8 +98,8 @@ class Trainer:
 
             # Debug image at each training time
             with torch.no_grad():
-                self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'])
-                self.debuger.debug_output(self.val_dataset, self.cfg['idxs_debug'], self.model, 'val', self.device, self.cfg['conf_debug'])
+                self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'], False)
+                self.debuger.debug_output(self.val_dataset, self.cfg['idxs_debug'], self.model, 'val', self.device, self.cfg['conf_debug'], True)
             
         
     def save_ckpt(self, save_path, best_acc, epoch):

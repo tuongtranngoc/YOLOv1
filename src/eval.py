@@ -25,10 +25,10 @@ class VocEval:
         self.shuffle = shuffle
         self.pin_men = pin_men
         self.num_workers = num_workers
-
-        self.loss_fn = SumSquaredError()
-        self.map = MeanAveragePrecision(iou_type="bbox")
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        self.loss_fn = SumSquaredError().to(self.device)
+        self.map = MeanAveragePrecision(iou_type="bbox")
         self.dataloader = DataLoader(self.dataset, self.bz, self.shuffle, num_workers=self.num_workers, pin_memory=self.pin_men)
 
     def cal_mAP(self, pred_bbox, pred_conf, pred_cls, gt_bbox, gt_conf, gt_cls):

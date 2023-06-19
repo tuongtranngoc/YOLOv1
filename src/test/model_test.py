@@ -1,15 +1,19 @@
+import cv2
 import torch
-import torch.nn as nn
+import numpy as np
+from torchview import draw_graph
+from ..models.modules.yolo import YoloModel
 
-from ..data.utils import *
-from ..utils.torch_utils import *
-from ..models.model_yolo import YOLOv1
 
-from torchsummary import summary
+def test_YOLO_model():
+    print('### Checking YOLO model')
+    input_size = 448
+    num_classes = 20
+    inp = torch.randn(2, 3, input_size, input_size)
+    device = torch.device('cuda')
+    model = YoloModel(input_size=input_size, backbone="vgg16", num_classes=num_classes, pretrained=True).to(device)
+    # summary(model)
+    graph = draw_graph(model, input_size=inp.shape, expand_nested=True, save_graph=True, directory='exps', graph_name='model')
 
-print("Creating model ...")
-model = YOLOv1()
 
-image = torch.randn(2, 3, 448, 448)  # torch.Size([2, 3, 448, 448])
-print(summary(model, image))
-
+test_YOLO_model()

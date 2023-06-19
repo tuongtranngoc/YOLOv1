@@ -73,7 +73,6 @@ class HEAD(nn.Module):
             nn.Linear(7 * 7 * 1024, 4096),
             nn.LeakyReLU(0.01, inplace=True),
             nn.Dropout(0.5),
-
             nn.Linear(4096, S * S * (5 * B + C)),
             nn.Sigmoid()
         )

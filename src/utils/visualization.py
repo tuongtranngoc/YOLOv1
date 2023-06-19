@@ -80,13 +80,13 @@ class Debuger:
         self.S = cfg['S']
         self.B = cfg['B']
         self.C = cfg['C']
+        self.cfg = cfg
         self.save_debug_path = save_debug_path
 
-    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh):
+    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, apply_mns=False):
         os.makedirs(f'{self.save_debug_path}/{type_infer}', exist_ok=True)
         model.eval()
         images, targets = [], []
-        #targets = targets.permute(0, 2, 1, 3)
         for index in idxs:
             image, target = dataset[index]
             images.append(image)
@@ -95,59 +95,55 @@ class Debuger:
         targets = torch.stack(targets, dim=0).to(device)
         images = torch.stack(images, dim=0).to(device)
         
-        bgt_bboxes, bgt_conf, bgt_cls = BoxUtils.reshape_data(targets)
-        bgt_bboxes = BoxUtils.decode_yolo(bgt_bboxes, device)
-        
         pred = model(images)
-        #pred = pred.permute(0, 2, 1, 3)
-        bpred_bboxes, bpred_conf, bpred_cls = BoxUtils.reshape_data(pred)
-        bpred_bboxes = BoxUtils.decode_yolo(bpred_bboxes, device)
 
         for i in range(images.size(0)):
-            gt_bboxes = bgt_bboxes[i]
-            gt_conf = bgt_conf[i]
-            gt_cls = bgt_cls[i]
+            gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(targets[i].unsqueeze(0))
+            gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
 
-            pred_bboxes = bpred_bboxes[i]
-            pred_conf = bpred_conf[i]
-            pred_cls = bpred_cls[i]
-            pred_cls = pred_cls.unsqueeze(2).expand((-1, -1, self.B, -1))
+            pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(pred[i].unsqueeze(0))
+            pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)
 
-            mask = (gt_conf[..., 0] == 1)
-            gt_conf = gt_conf[mask]
-            gt_bboxes = gt_bboxes[mask]
-            gt_cls = gt_cls.unsqueeze(2).expand((-1, -1, self.B, -1))
-            gt_cls = gt_cls[mask]
-            
-            gt_bboxes = BoxUtils.to_numpy(gt_bboxes).tolist()
-            gt_conf = BoxUtils.to_numpy(gt_conf).astype(np.float32).tolist()
-            gt_cls = np.argmax(BoxUtils.to_numpy(gt_cls), axis=-1).tolist()
-            
-            pred_conf_obj = pred_conf[mask]
-            pred_conf_noobj = pred_conf[~mask]
-            pred_bb_obj = pred_bboxes[mask]
-            pred_bb_noobj = pred_bboxes[~mask]
-            pred_cls_obj = pred_cls[mask]
-            pred_cls_noobj = pred_cls[~mask]
+            image = images[i]
 
-            pred_bb_obj = BoxUtils.to_numpy(pred_bb_obj).tolist()
-            pred_conf_obj = BoxUtils.to_numpy(pred_conf_obj).astype(np.float32).tolist()
-            pred_cls_obj = np.argmax(BoxUtils.to_numpy(pred_cls_obj), axis=-1).tolist()
-
-            pred_bb_noobj = BoxUtils.to_numpy(pred_bb_noobj).tolist()
-            pred_conf_noobj = BoxUtils.to_numpy(pred_conf_noobj).astype(np.float32).tolist()
-            pred_cls_noobj = np.argmax(BoxUtils.to_numpy(pred_cls_noobj), axis=-1).tolist()
-
-            image = BoxUtils.image_to_numpy(images[i])
-
-            for pred_box, pred_cls, pred_conf in zip(pred_bb_noobj, pred_cls_noobj, pred_conf_noobj):
-                if pred_conf[0] > conf_thresh:
-                    image = Drawer(image, False, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
-
-            for gt_box, gt_cls, gt_conf in zip(gt_bboxes, gt_cls, gt_conf):
-                image = Drawer(image, True, 'gt').draw_box_label(gt_box, gt_conf[0], gt_cls)
-
-            for pred_box, pred_cls, pred_conf in zip(pred_bb_obj, pred_cls_obj, pred_conf_obj):
-                image = Drawer(image, True, 'pred').draw_box_label(pred_box, pred_conf[0], pred_cls)
-
+            image = Vizualization.draw_debug(image, gt_bboxes, gt_conf, gt_cls)
+            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls)
             cv2.imwrite(f'{self.save_debug_path}/{type_infer}/{i}.png', image)
+
+
+class Vizualization:
+    S = cfg['S']
+    B = cfg['B']
+    C = cfg['C']
+    save_debug_path = cfg['prediction_debug']
+    os.makedirs(save_debug_path, exist_ok=True)
+
+    @classmethod
+    def reshape_data(cls, out):
+        pred_bboxes = out[..., :8]
+        pred_confs = out[..., 8:10].reshape(-1)
+        pred_cls = torch.argmax(out[..., 10:], dim=-1).unsqueeze(-1).expand((-1, -1, -1, 2)).reshape(-1)
+        pred_bboxes = BoxUtils.decode_yolo(pred_bboxes.reshape(-1, cls.S, cls.S, cls.B, 4)).reshape((-1, 4))
+
+        return pred_bboxes, pred_confs, pred_cls
+    
+    @classmethod
+    def label2numpy(cls, *args):
+        args_list = []
+        for i in range(len(args)):
+            args_list.append(BoxUtils.to_numpy(args[i]))
+        return args_list
+
+    @classmethod
+    def image2numpy(cls, images):
+        images = BoxUtils.image_to_numpy(images)
+        return images
+    
+
+    @classmethod
+    def draw_debug(cls, image, bboxes, confs, classes):
+        image = cls.image2numpy(image)
+        bboxes, confs, classes = cls.label2numpy(bboxes, confs, classes)
+        for bbox, conf, label in zip(bboxes, confs, classes):
+            image = Drawer(image, True, 'pred').draw_box_label(bbox, conf, label)
+        return image

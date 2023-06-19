@@ -60,7 +60,7 @@ class YoloDatset(BaseDatset):
             # Each grid cell contains:
             #   bbox1: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
             #   bbox2: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
-
+            
             p_cls = torch.zeros(C)
             p_cls[int(class_id)-1] = 1.0
             conf_cls = torch.ones((2, )).long()

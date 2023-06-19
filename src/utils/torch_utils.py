@@ -8,34 +8,34 @@ from ..config import CFG as cfg
 from ..data.utils import Unnormalize
 
 
-def compute_iou(target, pred, device):
+def compute_iou(target, pred):
     eps = 1e-6
-    x = BoxUtils.decode_yolo(target[..., :4], device)
-    y = BoxUtils.decode_yolo(pred[..., :4], device)
+    x = BoxUtils.decode_yolo(target[..., :4])
+    y = BoxUtils.decode_yolo(pred[..., :4])
     x1 = torch.max(x[..., 0], y[..., 0])
     y1 = torch.max(x[..., 1], y[..., 1])
     x2 = torch.min(x[..., 2], y[..., 2])
     y2 = torch.min(x[..., 3], y[..., 3])
     intersects = torch.clamp((x2-x1), 0) * torch.clamp((y2-y1), 0)
     unions = abs((x[..., 2] - x[..., 0]) * (x[..., 3] - x[..., 1])) + abs((y[..., 2] - y[..., 0]) * (y[..., 3] - y[..., 1])) - intersects
-    ious = intersects / (unions + eps)
-    return ious
+    intersects[intersects.gt(0)] = intersects[intersects.gt(0)] / unions[intersects.gt(0)]
+    return intersects
 
 class BoxUtils:
     S = cfg['S']
     B = cfg['B']
     C = cfg['C'] 
-       
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     @classmethod
-    def decode_yolo(cls, bboxes, device):
+    def decode_yolo(cls, bboxes):
         bz = bboxes.size(0)
         idxs_i = torch.arange(cls.S)
         idxs_j = torch.arange(cls.S)
         pos_j, pos_i = torch.meshgrid(idxs_i, idxs_j, indexing='ij')
         pos_i = pos_i.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
         pos_j = pos_j.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
-        pos_i = pos_i.to(device)
-        pos_j = pos_j.to(device)
+        pos_i = pos_i.to(cls.device)
+        pos_j = pos_j.to(cls.device)
         xc = (bboxes[..., 0] + pos_i) / cls.S
         yc = (bboxes[..., 1] + pos_j) / cls.S
         x1 = torch.clamp(xc - bboxes[..., 2] **2 / 2, min=0)
@@ -56,7 +56,7 @@ class BoxUtils:
     def to_numpy(cls, data):
         if isinstance(data, torch.Tensor):
             return data.detach().cpu().numpy()
-        elif isinstance(data, np.array):
+        elif isinstance(data, np.ndarray):
             return data
         else:
             raise Exception(f"{data} is a type of {type(data)}, not numpy/tensor type")
@@ -70,13 +70,21 @@ class BoxUtils:
             image = np.ascontiguousarray(image, np.uint8)
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             return image
-        elif isinstance(image, np.array):
+        
+        elif isinstance(image, np.ndarray):
             return image
+        
         else:
             raise Exception(f"{image} is a type of {type(image)}, not numpy/tensor type")
         
     @classmethod
-    def nms(self, pred_bboxes, pred_confs, pred_cls, iou_thresh):
+    def nms(self, pred_bboxes, pred_confs, pred_cls, iou_thresh, conf_thresh):
+
+        conf_mask = torch.where(pred_confs>=conf_thresh)[0]
+        pred_bboxes = pred_bboxes[conf_mask]
+        pred_confs = pred_confs[conf_mask]
+        pred_cls = pred_cls[conf_mask]
+
         idxs = torchvision.ops.nms(pred_bboxes, pred_confs, iou_thresh)
         nms_bboxes = pred_bboxes[idxs]
         nms_confs = pred_confs[idxs]

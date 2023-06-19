@@ -50,36 +50,29 @@ class BaseDatset(Dataset):
         
         return dataset
     
-    def load_dataset_voc_format(self, image_dir, anno_dir, txt_file):
+    def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
         print('Loading voc dataset')
         dataset = []
-        id_map = json.load(open('dataset/VOC2012/label_to_id.json'))
-        image_ids = open(txt_file).read().strip().split('\n')
-        
-        for im_id in tqdm(image_ids, desc="Parsing VOC data ..."):
-            anno_path = os.path.join(anno_dir, im_id + '.xml')
-            anno = EasyDict(xmltodict.parse(open(anno_path).read())).annotation
-            image_path = os.path.join(image_dir, anno.filename)
-            if type(anno.object) is not list:
-                anno.object = [anno.object]
-            bboxes = []
-        
-            for item in anno.object:
-                box = item.bndbox
-                box = [box.xmin, box.ymin, box.xmax, box.ymax]
-                box_info = [id_map[item.name]] + [eval(c) for c in box]
-                bboxes.append(box_info)
-            dataset.append([image_path, np.array(bboxes, dtype=np.float32)])
+        id_map = json.load(open('dataset/VOC/VOCdevkit/label_to_id.json'))
+        if len(txt_files) > 0:
+            for txt_file, image_dir, anno_dir in zip(txt_files, image_dirs, anno_dirs):
+                image_ids = []
+                image_ids = open(txt_file).read().strip().split('\n')
+
+                for im_id in tqdm(image_ids, desc="Parsing VOC data ..."):
+                    anno_path = os.path.join(anno_dir, im_id + '.xml')
+                    anno = EasyDict(xmltodict.parse(open(anno_path).read())).annotation
+                    image_path = os.path.join(image_dir, anno.filename)
+                    if type(anno.object) is not list:
+                        anno.object = [anno.object]
+                    bboxes = []
+
+                    for item in anno.object:
+                        box = item.bndbox
+                        box = [box.xmin, box.ymin, box.xmax, box.ymax]
+                        box = [eval(c) for c in box]
+                        label = id_map[item.name]
+                        box_info = [label] + box
+                        bboxes.append(box_info)
+                    dataset.append([image_path, np.array(bboxes, dtype=np.float32)])
         return dataset
-
-
-
-
-
-
-        
-
-        
-    
-
-    

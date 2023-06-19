@@ -27,9 +27,9 @@ class SumSquaredError(nn.Module):
         C = self.cfg['C']
         gt_bboxes, gt_conf, gt_cls = BoxUtils.reshape_data(gt)
         pred_bboxes, pred_conf, pred_cls = BoxUtils.reshape_data(pred)
-
+        
         gt_bboxes = gt_bboxes.clone()
-        ious = compute_iou(gt_bboxes, pred_bboxes, self.device)
+        ious = compute_iou(gt_bboxes, pred_bboxes)
         _, max_idxs = torch.max(ious, dim=-1)
         
         one_obj_ij = (gt_conf[..., 0] == 1)
@@ -51,9 +51,9 @@ class SumSquaredError(nn.Module):
         noobj_loss = self.mse_loss_fn(pred_conf[..., 0][one_noobj_ij], gt_conf[..., 0][one_noobj_ij])
          
         cls_loss = self.mse_loss_fn(pred_cls[one_obj_i], gt_cls[one_obj_i])
-
+        
         box_loss = self.lambda_coord  * box_loss
 
         conf_loss = (self.lambda_noobj * noobj_loss + obj_loss)
         
-        return box_loss / bz, conf_loss / bz, cls_loss / bz
+        return box_loss, conf_loss, cls_loss
