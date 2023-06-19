@@ -23,7 +23,7 @@ class Predictor:
             backbone="vgg16",
             num_classes=cfg["C"],
             pretrained=True).to(self.device)
-        self.model = self.load_weight(self.model, cfg["last_ckpt_path"])
+        self.model = self.load_weight(self.model, cfg["best_ckpt_path"])
 
     def predict(self, image_pth):
         image = cv2.imread(image_pth)
@@ -32,11 +32,11 @@ class Predictor:
         image = image.unsqueeze(0)
         self.model.eval()
         with torch.no_grad():
-            out = self.model(image)[0]
+            out = self.model(image)
 
         pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
-        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, cfg["iou_thresh"], cfg["conf_thresh"])
-        image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls)
+        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.2, 0.65)
+        image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
         cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
 
     def tranform(self, image):
@@ -46,7 +46,7 @@ class Predictor:
 
     def load_weight(self, model, weight_path):
         if os.path.exists(weight_path):
-            ckpt = torch.load(weight_path)
+            ckpt = torch.load(weight_path, map_location=self.device)
             model.load_state_dict(ckpt["model"])
             return model
         else:
@@ -55,5 +55,5 @@ class Predictor:
 
 if __name__ == "__main__":
     predictor = Predictor()
-    image_path = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/VOCdevkit/VOC2007/JPEGImages/005264.jpg"
+    image_path = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/VOCdevkit/VOC2007/JPEGImages/000211.jpg"
     result = predictor.predict(image_path)
