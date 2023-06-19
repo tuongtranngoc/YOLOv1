@@ -25,7 +25,7 @@ class Trainer:
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.cfg = CFG
-        self.best_loss = 0
+        self.best_map = 0
         self.create_model()
         self.create_dataloader()
         self.debuger = Debuger(self.cfg['training_debug'])
@@ -75,7 +75,7 @@ class Trainer:
                                                          conf_loss=mt_conf_loss.get_value(), \
                                                          cls_loss=mt_cls_loss.get_value())
 
-            print(f"TRAIN - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, \
+            print(f"[TRAIN] - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, \
                                             conf_loss: {mt_conf_loss.get_value('mean'): .5f}, \
                                             class_loss: {mt_cls_loss.get_value('mean'): .5f}")
             
@@ -85,17 +85,19 @@ class Trainer:
             print("Epoch %d: SGD lr %.5f -> %.5f" % (epoch, before_lr, after_lr))
 
             if epoch % self.cfg['eval_step'] == 0:
-                eval_box_loss, eval_conf_loss, eval_cls_loss = self.eval.evaluate()
-                print(f'EVALUATE - box_loss: {eval_box_loss.get_value("mean"):.5f}, \
-                            conf_loss: {eval_conf_loss.get_value("mean"):.5f}, \
-                            cls_loss: {eval_cls_loss.get_value("mean"):.5f}')
+                metrics = self.eval.evaluate()
+                Tensorboard.add_scalars('eval_loss', epoch, box_loss=metrics["eval_box_loss"].get_value('mean'), \
+                                                        conf_loss=metrics["eval_conf_loss"].get_value('mean'), \
+                                                        cls_loss=metrics["eval_cls_loss"].get_value('mean'))
                 
-                Tensorboard.add_scalars('eval', epoch, box_loss=eval_box_loss.get_value('mean'), \
-                                                        conf_loss=eval_conf_loss.get_value('mean'), \
-                                                        cls_loss=eval_cls_loss.get_value('mean'))
+                Tensorboard.add_scalars('eval_map', epoch, mAP=metrics["eval_map"].get_value('mean'), \
+                                                        mAP_50=metrics["eval_map_50"].get_value('mean'), \
+                                                        mAP_75=metrics["eval_map_75"].get_value('mean'))
                 
-                self.save_ckpt(self.cfg['last_ckpt_path'], 0, epoch)
-
+                if metrics['eval_map'].get_value('mean') > self.best_map:
+                    self.best_map = metrics['eval_map'].get_value('mean')
+                    self.save_ckpt(self.cfg['best_ckpt_path'], self.best_map, epoch)
+                self.save_ckpt(self.cfg['last_ckpt_path'], self.best_map, epoch)
             # Debug image at each training time
             with torch.no_grad():
                 self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'], False)

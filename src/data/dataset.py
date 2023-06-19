@@ -66,7 +66,6 @@ class BaseDatset(Dataset):
                     if type(anno.object) is not list:
                         anno.object = [anno.object]
                     bboxes = []
-
                     for item in anno.object:
                         box = item.bndbox
                         box = [box.xmin, box.ymin, box.xmax, box.ymax]

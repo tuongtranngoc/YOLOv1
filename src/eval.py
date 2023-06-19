@@ -9,6 +9,7 @@ from .utils.metrics import BatchMeter
 from .utils.visualization import Debuger
 from .utils.losses import SumSquaredError
 from .utils.tensorboard import Tensorboard
+from .utils.visualization import Vizualization
 
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -28,7 +29,7 @@ class VocEval:
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         self.loss_fn = SumSquaredError().to(self.device)
-        self.map = MeanAveragePrecision(iou_type="bbox")
+        self.map = MeanAveragePrecision(class_metrics=True)
         self.dataloader = DataLoader(self.dataset, self.bz, self.shuffle, num_workers=self.num_workers, pin_memory=self.pin_men)
 
     def cal_mAP(self, pred_bbox, pred_conf, pred_cls, gt_bbox, gt_conf, gt_cls):
@@ -55,50 +56,46 @@ class VocEval:
         return result
 
     def evaluate(self):
-        eval_box_loss = BatchMeter('box_loss')
-        eval_conf_loss = BatchMeter('conf_loss')
-        eval_cls_loss = BatchMeter('cls_loss')
-        self.model.eval()
+        metrics = {
+            "eval_box_loss": BatchMeter('box_loss'), 
+            "eval_conf_loss": BatchMeter('conf_loss'),
+            "eval_cls_loss": BatchMeter('cls_loss'),
+            "eval_map": BatchMeter('map'),
+            "eval_map_50": BatchMeter('map_50'),
+            "eval_map_75": BatchMeter('map_75')
+        }
 
+        self.model.eval()
+        
         for i, (images, labels) in enumerate(tqdm(self.dataloader)):
             batch_size = images.size(0)
             images = images.to(self.device)
             labels = labels.to(self.device)
             with torch.no_grad():
                 out = self.model(images)
-                bpred_bboxes, bpred_conf, bpred_cls = BoxUtils.reshape_data(out)
-                bpred_bboxes = BoxUtils.decode_yolo(bpred_bboxes, self.device)
-                bpred_cls = torch.argmax(bpred_cls, dim=-1)
-
-                btarget_bboxes, btarget_conf, btarget_cls = BoxUtils.reshape_data(labels)
-                btarget_bboxes = BoxUtils.decode_yolo(btarget_bboxes, self.device)
-                btarget_cls = torch.argmax(btarget_cls, dim=-1)
-
                 box_loss, conf_loss, cls_loss = self.loss_fn(labels, out)
 
-                eval_box_loss.update(box_loss)
-                eval_conf_loss.update(conf_loss)
-                eval_cls_loss.update(cls_loss)
-            
-        return eval_box_loss, eval_conf_loss, eval_cls_loss
-    
-            # for j in range(batch_size):
-            #     pred_bboxes = bpred_bboxes[j].reshape((-1, 4))
-            #     pred_conf = bpred_conf[j].reshape(-1)
-            #     pred_cls = bpred_cls[j].unsqueeze(-1).expand((-1, -1, 2)).reshape(-1)
+                metrics["eval_box_loss"].update(box_loss)
+                metrics["eval_conf_loss"].update(conf_loss)
+                metrics["eval_cls_loss"].update(cls_loss)
 
-            #     target_bboxes = btarget_bboxes[j][..., 0, :].reshape((-1, 4))
-            #     target_conf = btarget_conf[j][..., 0, :].squeeze(-1).reshape(-1)
-            #     target_cls = btarget_cls[j].reshape(-1)
+                for j in range(images.size(0)):
+                    image = images[j]
+                    pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out[i].unsqueeze(0))
+                    gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(labels[i].unsqueeze(0))
+                    pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, cfg['iou_thresh'], cfg['conf_thresh'])
+                    mAP = self.cal_mAP(pred_bboxes, pred_conf, pred_cls, gt_bboxes, gt_conf, gt_cls)
 
-            #     obj_mask = torch.where(target_conf > 0)
-            #     target_bboxes = target_bboxes[obj_mask]
-            #     target_conf = target_conf[obj_mask]
-            #     target_cls = target_cls[obj_mask]
+                    metrics["eval_map"].update(mAP['map'])
+                    metrics["eval_map_50"].update(mAP['map_50'])
+                    metrics["eval_map_75"].update(mAP['map_75'])
 
-            #     pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, self.cfg['iou_thresh'])
+        print(f'[EVALUATE] - box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
+            conf_loss: {metrics["eval_conf_loss"].get_value("mean"):.5f}, \
+            cls_loss: {metrics["eval_cls_loss"].get_value("mean"):.5f}')
+        
+        print(f'[EVALUATE] - map: {metrics["eval_map"].get_value("mean"):.5f}, \
+            map_50: {metrics["eval_map_50"].get_value("mean"):.5f}, \
+            map_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
 
-            #     map = self.cal_mAP(pred_bboxes, pred_conf, pred_cls, target_bboxes, target_conf, target_cls)
-
-            
-
+        return metrics

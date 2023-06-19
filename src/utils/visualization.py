@@ -103,11 +103,11 @@ class Debuger:
 
             pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(pred[i].unsqueeze(0))
             pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)
-
+            
             image = images[i]
 
-            image = Vizualization.draw_debug(image, gt_bboxes, gt_conf, gt_cls)
-            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls)
+            image = Vizualization.draw_debug(image, gt_bboxes, gt_conf, gt_cls, conf_thresh)
+            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, conf_thresh)
             cv2.imwrite(f'{self.save_debug_path}/{type_infer}/{i}.png', image)
 
 
@@ -141,9 +141,10 @@ class Vizualization:
     
 
     @classmethod
-    def draw_debug(cls, image, bboxes, confs, classes):
+    def draw_debug(cls, image, bboxes, confs, classes, conf_thresh):
         image = cls.image2numpy(image)
         bboxes, confs, classes = cls.label2numpy(bboxes, confs, classes)
         for bbox, conf, label in zip(bboxes, confs, classes):
-            image = Drawer(image, True, 'pred').draw_box_label(bbox, conf, label)
+            if conf >= conf_thresh:
+                image = Drawer(image, True, 'pred').draw_box_label(bbox, conf, label)
         return image
