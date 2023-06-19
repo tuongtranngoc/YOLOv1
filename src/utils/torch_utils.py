@@ -9,7 +9,7 @@ from ..data.utils import Unnormalize
 
 
 def compute_iou(target, pred):
-    eps = 1e-6
+    # eps = 1e-6
     x = BoxUtils.decode_yolo(target[..., :4])
     y = BoxUtils.decode_yolo(pred[..., :4])
     x1 = torch.max(x[..., 0], y[..., 0])
@@ -70,16 +70,13 @@ class BoxUtils:
             image = np.ascontiguousarray(image, np.uint8)
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             return image
-        
         elif isinstance(image, np.ndarray):
             return image
-        
         else:
             raise Exception(f"{image} is a type of {type(image)}, not numpy/tensor type")
         
     @classmethod
     def nms(self, pred_bboxes, pred_confs, pred_cls, iou_thresh, conf_thresh):
-
         conf_mask = torch.where(pred_confs>=conf_thresh)[0]
         pred_bboxes = pred_bboxes[conf_mask]
         pred_confs = pred_confs[conf_mask]

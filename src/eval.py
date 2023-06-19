@@ -46,7 +46,7 @@ class VocEval:
         ]
 
         map_mt.update(preds, target)
-
+    
     def evaluate(self):
         metrics = {
             "eval_box_loss": BatchMeter('box_loss'), 

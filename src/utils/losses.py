@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .torch_utils import *
 from ..data import CFG
+from .torch_utils import *
 
 
 class SumSquaredError(nn.Module):
