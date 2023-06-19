@@ -3,7 +3,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import torch
-from tqdm import tqdm
 from torch.utils.data import DataLoader
 
 from src import CFG
@@ -12,11 +11,10 @@ from src.utils.visualization import *
 
 from .data.utils import *
 from .utils.metrics import BatchMeter
-# from .models.model_yolo import YOLOv1
-from .models.modules.yolo import YoloModel
 from .utils.visualization import Debuger
 from .data.dataset_yolo import YoloDatset
 from .utils.losses import SumSquaredError
+from .models.modules.yolo import YoloModel
 from .utils.tensorboard import Tensorboard
 
 
@@ -98,6 +96,7 @@ class Trainer:
                     self.best_map = metrics['eval_map'].get_value('mean')
                     self.save_ckpt(self.cfg['best_ckpt_path'], self.best_map, epoch)
                 self.save_ckpt(self.cfg['last_ckpt_path'], self.best_map, epoch)
+
             # Debug image at each training time
             with torch.no_grad():
                 self.debuger.debug_output(self.train_dataset, self.cfg['idxs_debug'], self.model, 'train', self.device, self.cfg['conf_debug'], False)
@@ -113,7 +112,6 @@ class Trainer:
             "epoch": epoch
         }
         torch.save(ckpt_dict, save_path)
-
 
 if __name__ == "__main__":
     trainer = Trainer()
