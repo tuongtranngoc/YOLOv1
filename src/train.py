@@ -60,14 +60,15 @@ class Trainer:
             num_classes=self.cfg["C"],
             pretrained=True,).to(self.device)
         self.loss_fn = SumSquaredError().to(self.device)
-        self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
-        self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [75, 105], gamma=0.1)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
+        # self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [75, 105], gamma=0.1)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
 
     def train(self):
         for epoch in range(1, self.cfg["epochs"]):
-            mt_box_loss = BatchMeter("box_loss")
-            mt_conf_loss = BatchMeter("conf_loss")
-            mt_cls_loss = BatchMeter("cls_loss")
+            mt_box_loss = BatchMeter()
+            mt_conf_loss = BatchMeter()
+            mt_cls_loss = BatchMeter()
 
             for bz, (images, labels) in enumerate(self.train_loader):
                 self.model.train()
@@ -102,11 +103,6 @@ class Trainer:
             print(f"[TRAIN] - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, \
                                             conf_loss: {mt_conf_loss.get_value('mean'): .5f}, \
                                             class_loss: {mt_cls_loss.get_value('mean'): .5f}")
-
-            before_lr = self.optimizer.param_groups[0]["lr"]
-            self.lr_scheduler.step()
-            after_lr = self.optimizer.param_groups[0]["lr"]
-            print("Epoch %d: SGD lr %.5f -> %.5f" % (epoch, before_lr, after_lr))
 
             if epoch % self.cfg["eval_step"] == 0:
                 metrics = self.eval.evaluate()

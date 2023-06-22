@@ -51,7 +51,7 @@ class BaseDatset(Dataset):
         return dataset
     
     def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
-        print('Loading voc dataset')
+        print(f'Loading voc dataset from {txt_files}')
         dataset = []
         id_map = json.load(open('dataset/VOC/VOCdevkit/label_to_id.json'))
         if len(txt_files) > 0:

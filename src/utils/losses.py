@@ -30,10 +30,10 @@ class SumSquaredError(nn.Module):
         
         gt_bboxes = gt_bboxes.clone()
         ious = compute_iou(gt_bboxes, pred_bboxes)
-        _, max_idxs = torch.max(ious, dim=-1)
+        max_ious, max_idxs = torch.max(ious, dim=-1)
         
         one_obj_ij = (gt_conf[..., 0] == 1)
-        one_obj_i = (gt_conf[..., 0] == 1)[..., 0]
+        one_obj_i = (gt_conf[..., 0] == 1)[..., 0]  
 
         idxs = torch.where(one_obj_i==True)
         for bz, j, i in zip(*idxs):
@@ -41,6 +41,7 @@ class SumSquaredError(nn.Module):
             max_id = max_idxs[bz, j, i]
             one_obj_ij[bz, j, i, 1-max_id] = False
             gt_conf[bz, j, i, 1-max_id, 0] = 0
+            gt_conf[bz, j, i, max_id, 0] = max_ious[bz, j, i]
 
         one_noobj_ij = ~one_obj_ij
         

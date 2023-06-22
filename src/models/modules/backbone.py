@@ -74,9 +74,9 @@ class ResNet(nn.Module):
 class VGG16(nn.Module):
     def __init__(self, batch_norm=False):
         super().__init__()
-        cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']
+        cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']
         self.features = self.make_layers(cfg, batch_norm)
-
+    
     def forward(self, x):
         x = self.features(x)
         return x

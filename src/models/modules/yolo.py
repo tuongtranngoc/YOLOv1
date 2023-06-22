@@ -26,7 +26,7 @@ model_urls = {
 class YoloModel(nn.Module):
     def __init__(self, input_size, backbone, num_classes, pretrained=True):
         super().__init__()
-        self.stride = 32
+        self.stride = 64
         self.grid_size = input_size // self.stride
         self.num_classes = num_classes
         self.backbone, feat_dims = build_backbone(arch_name=backbone)
@@ -39,7 +39,7 @@ class YoloModel(nn.Module):
                 gdown.download(model_urls[f"yolov1-{backbone}"], str(download_path), quiet=False, fuzzy=True)
             ckpt = torch.load(download_path, map_location="cpu")
             self.load_state_dict(ckpt["model_state"], strict=False)
-
+        
     def forward(self, x):
         self.device = x.device
         out = self.backbone(x)

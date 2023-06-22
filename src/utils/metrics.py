@@ -2,8 +2,7 @@ import numpy as np
 
 
 class BatchMeter(object):
-    def __init__(self, name) -> None:
-        self.name = name
+    def __init__(self) -> None:
         self.reset()
 
     def reset(self):

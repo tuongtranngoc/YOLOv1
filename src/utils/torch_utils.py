@@ -21,6 +21,7 @@ def compute_iou(target, pred):
     intersects[intersects.gt(0)] = intersects[intersects.gt(0)] / unions[intersects.gt(0)]
     return intersects
 
+
 class BoxUtils:
     S = cfg['S']
     B = cfg['B']

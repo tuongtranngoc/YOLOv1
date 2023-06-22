@@ -33,7 +33,7 @@ class VocEval:
 
     def cal_mAP(self, map_mt, pred_bbox, pred_conf, pred_cls, gt_bbox, gt_conf, gt_cls):
         """https://torchmetrics.readthedocs.io/en/stable/detection/mean_average_precision.html"""
-        preds = [{"boxes": pred_bbox.to(), "scores": pred_conf, "labels": pred_cls}]
+        preds = [{"boxes": pred_bbox, "scores": pred_conf, "labels": pred_cls}]
 
         target = [{"boxes": gt_bbox, "scores": gt_conf, "labels": gt_cls}]
 
@@ -41,18 +41,19 @@ class VocEval:
 
     def evaluate(self):
         metrics = {
-            "eval_box_loss": BatchMeter("box_loss"),
-            "eval_conf_loss": BatchMeter("conf_loss"),
-            "eval_cls_loss": BatchMeter("cls_loss"),
-            "eval_map": BatchMeter("map"),
-            "eval_map_50": BatchMeter("map_50"),
-            "eval_map_75": BatchMeter("map_75"),
+            "eval_box_loss": BatchMeter(),
+            "eval_conf_loss": BatchMeter(),
+            "eval_cls_loss": BatchMeter(),
+
+            "eval_map": BatchMeter(),
+            "eval_map_50": BatchMeter(),
+            "eval_map_75": BatchMeter(),
         }
 
         map_mt = MeanAveragePrecision(class_metrics=True)
 
         self.model.eval()
-
+        
         for i, (images, labels) in enumerate(tqdm(self.dataloader)):
             images = images.to(self.device)
             labels = labels.to(self.device)
@@ -74,6 +75,7 @@ class VocEval:
                         pred_cls,
                         cfg["iou_thresh"],
                         cfg["conf_thresh"])
+                    
                     self.cal_mAP(
                         map_mt,
                         pred_bboxes,
@@ -87,12 +89,14 @@ class VocEval:
         metrics["eval_map"].update(mAP["map"])
         metrics["eval_map_50"].update(mAP["map_50"])
         metrics["eval_map_75"].update(mAP["map_75"])
-
-        print(f'[EVALUATE] - box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
+        
+        print(f'[EVALUATE] \
+            box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
             conf_loss: {metrics["eval_conf_loss"].get_value("mean"):.5f}, \
             cls_loss: {metrics["eval_cls_loss"].get_value("mean"):.5f}')
 
-        print(f'[EVALUATE] - map: {metrics["eval_map"].get_value("mean"):.5f}, \
+        print(f'[EVALUATE] \
+            map: {metrics["eval_map"].get_value("mean"):.5f}, \
             map_50: {metrics["eval_map_50"].get_value("mean"):.5f}, \
             map_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
 
