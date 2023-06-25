@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
+from tqdm import tqdm
 
 from .config import CFG as cfg
 from .utils.visualization import *
@@ -23,7 +24,7 @@ class Predictor:
             backbone="vgg16",
             num_classes=cfg["C"],
             pretrained=False).to(self.device)
-        self.model = self.load_weight(self.model, cfg["last_ckpt_path"])
+        self.model = self.load_weight(self.model, cfg["best_ckpt_path"])
 
     def predict(self, image_pth):
         image = cv2.imread(image_pth)
@@ -35,7 +36,7 @@ class Predictor:
             out = self.model(image)
 
         pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
-        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.6, 0.4)
+        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.3, 0.3)
         image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
         cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
 
@@ -55,5 +56,11 @@ class Predictor:
 
 if __name__ == "__main__":
     predictor = Predictor()
-    image_path = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/VOCdevkit/VOC2007/JPEGImages/000009.jpg"
-    result = predictor.predict(image_path)
+    image_ids = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/images_id/test2007.txt"
+    images = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/images/test2007"
+    with open(image_ids, 'r') as f_id:
+        list_img_ids = f_id.readlines()
+        for img_id in tqdm(list_img_ids):
+            img_id = img_id.strip()
+            image_path = os.path.join(images, img_id + '.jpg')
+            result = predictor.predict(image_path)

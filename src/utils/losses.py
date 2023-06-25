@@ -22,9 +22,6 @@ class SumSquaredError(nn.Module):
 
     def forward(self, gt, pred):
         bz = gt.size(0)
-        S = self.cfg['S']
-        B = self.cfg['B']
-        C = self.cfg['C']
         gt_bboxes, gt_conf, gt_cls = BoxUtils.reshape_data(gt)
         pred_bboxes, pred_conf, pred_cls = BoxUtils.reshape_data(pred)
         
@@ -34,14 +31,14 @@ class SumSquaredError(nn.Module):
         
         one_obj_ij = (gt_conf[..., 0] == 1)
         one_obj_i = (gt_conf[..., 0] == 1)[..., 0]  
-
+            
         idxs = torch.where(one_obj_i==True)
         for bz, j, i in zip(*idxs):
             bz, j, i = bz.item(), j.item(), i.item()
-            max_id = max_idxs[bz, j, i]
-            one_obj_ij[bz, j, i, 1-max_id] = False
-            gt_conf[bz, j, i, 1-max_id, 0] = 0
-            gt_conf[bz, j, i, max_id, 0] = max_ious[bz, j, i]
+            max_idx = max_idxs[bz, j, i]
+            one_obj_ij[bz, j, i, 1-max_idx] = False
+            gt_conf[bz, j, i, 1-max_idx, 0] = 0
+            gt_conf[bz, j, i, max_idx, 0] = max_ious[bz, j, i]
 
         one_noobj_ij = ~one_obj_ij
         

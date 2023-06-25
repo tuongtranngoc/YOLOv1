@@ -24,7 +24,7 @@ class YoloDatset(BaseDatset):
         self.image_size = self.cfg['image_size']
         self.tranform = Transform(self.image_size)
         self.dataset_voc = self.load_dataset_voc_format(self.image_path, self.label_path, self.txt_path)
-
+    
     def get_image_label(self, image_pth, bboxes, labels):
         image = cv2.imread(image_pth).astype(np.float32)
         if self.is_augment:
@@ -54,7 +54,7 @@ class YoloDatset(BaseDatset):
             pos_i = int(x_c // grid_cell_i)
             pos_j = int(y_c // grid_cell_j)
 
-            if target_cxcywh[pos_j, pos_i, 9] > 0 or target_cxcywh[pos_j, pos_i, 4] > 0:
+            if target_cxcywh[pos_j, pos_i, 4] > 0 or target_cxcywh[pos_j, pos_i, 5] > 0:
                 continue
 
             # Each grid cell contains:

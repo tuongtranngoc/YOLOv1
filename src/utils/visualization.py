@@ -38,7 +38,7 @@ def class2color(class_name):
 
 class Drawer:
     def __init__(self, image, is_impt=True, type_label='gt') -> None:
-        id_map = json.load(open('dataset/VOC2012/label_to_id.json'))
+        id_map = json.load(open(cfg['VOC']['label2id']))
         self.id2classes = {
             id_map[k]: k
             for k in id_map.keys()
@@ -99,6 +99,9 @@ class Debuger:
         images = torch.stack(images, dim=0).to(device)
         
         pred = model(images)
+
+        # targets = targets.permute(0, 2, 1, 3)
+        # pred = pred.permute(0, 2, 1, 3)
 
         for i in range(images.size(0)):
             gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(targets[i].unsqueeze(0))

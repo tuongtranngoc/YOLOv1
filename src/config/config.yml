@@ -17,18 +17,19 @@
 
 ########################### Training ######################
 "VOC":
-  "image_path": ['dataset/VOC/VOCdevkit/VOC2007/JPEGImages', 'dataset/VOC/VOCdevkit/VOC2012/JPEGImages']
-  "anno_path": ['dataset/VOC/VOCdevkit/VOC2007/Annotations', 'dataset/VOC/VOCdevkit/VOC2012/Annotations']
-  "txt_train_path": ['dataset/VOC/VOCdevkit/VOC2007/ImageSets/Main/train.txt', 'dataset/VOC/VOCdevkit/VOC2012/ImageSets/Main/train.txt']
-  "txt_val_path": ['dataset/VOC/VOCdevkit/VOC2007/ImageSets/Main/val.txt']
+  "image_path": "dataset/VOC/images"
+  "anno_path": "dataset/VOC/labels"
+  "txt_train_path": ["dataset/VOC/images_id/train2007.txt", "dataset/VOC/images_id/train2012.txt"]
+  "txt_val_path": ['dataset/VOC/images_id/test2007.txt']
+  "label2id": "dataset/VOC/label_to_id.json"
 
 "epochs": 200
 "eval_step": 5
 "bz_train": 22
 "bz_valid": 8
 "n_workers": 8
-"iou_thresh": 0.3
-"conf_thresh": 0.3
+"iou_thresh": 0.5
+"conf_thresh": 0.25
 
 ########################### Debugging ######################
 "tensorboard_debug": "exps/tensorboard"

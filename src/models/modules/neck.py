@@ -14,6 +14,5 @@ class ConvBlock(nn.Module):
             Conv(out_channels*2, out_channels, kernel_size=1),
         )
 
-
     def forward(self, x):
         return self.convs(x)

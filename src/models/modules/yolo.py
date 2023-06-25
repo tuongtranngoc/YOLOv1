@@ -47,8 +47,8 @@ class YoloModel(nn.Module):
         out = self.head(out)
         out = out.permute(0, 2, 3, 1).contiguous()
 
-        pred_obj = torch.sigmoid(out[..., 8:10])
         pred_box = torch.sigmoid(out[..., :8])
+        pred_obj = torch.sigmoid(out[..., 8:10])
         pred_cls = torch.sigmoid(out[..., 10:])
    
         return torch.cat((pred_box, pred_obj, pred_cls), dim=-1)

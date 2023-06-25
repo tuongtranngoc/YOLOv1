@@ -30,13 +30,11 @@ class BoxUtils:
     @classmethod
     def decode_yolo(cls, bboxes):
         bz = bboxes.size(0)
-        idxs_i = torch.arange(cls.S)
-        idxs_j = torch.arange(cls.S)
-        pos_j, pos_i = torch.meshgrid(idxs_i, idxs_j, indexing='ij')
+        idxs_i = torch.arange(cls.S, device=cls.device)
+        idxs_j = torch.arange(cls.S, device=cls.device)
+        pos_j, pos_i = torch.meshgrid(idxs_j, idxs_i, indexing='ij')
         pos_i = pos_i.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
         pos_j = pos_j.expand((bz, -1, -1)).unsqueeze(3).expand((-1, -1, -1, 2))
-        pos_i = pos_i.to(cls.device)
-        pos_j = pos_j.to(cls.device)
         xc = (bboxes[..., 0] + pos_i) / cls.S
         yc = (bboxes[..., 1] + pos_j) / cls.S
         x1 = torch.clamp(xc - bboxes[..., 2] **2 / 2, min=0)
@@ -87,5 +85,5 @@ class BoxUtils:
         nms_bboxes = pred_bboxes[idxs]
         nms_confs = pred_confs[idxs]
         nms_classes = pred_cls[idxs]
-
+        
         return nms_bboxes, nms_confs, nms_classes

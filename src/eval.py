@@ -4,7 +4,9 @@ from tqdm import tqdm
 from .config import CFG
 from .utils.torch_utils import *
 from .utils.metrics import BatchMeter
+from .data.dataset_yolo import YoloDatset
 from .utils.losses import SumSquaredError
+from .models.modules.yolo import YoloModel
 from .utils.visualization import Vizualization
 
 from torch.utils.data import DataLoader
@@ -101,3 +103,20 @@ class VocEval:
             map_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
 
         return metrics
+    
+
+if __name__ == "__main__":
+    dataset = YoloDatset(
+            cfg["VOC"]["image_path"],
+            cfg["VOC"]["anno_path"],
+            cfg["VOC"]["txt_val_path"])
+    model = YoloModel(
+            input_size=cfg["image_size"][0],
+            backbone="vgg16",
+            num_classes=cfg["C"],
+            pretrained=False).to('cpu')
+    ckpt = torch.load(cfg["last_ckpt_path"], map_location='cpu')
+    model.load_state_dict(ckpt["model"])
+    eval = VocEval(dataset, model, cfg["bz_valid"], False, cfg["n_workers"], False)
+    eval.evaluate()
+

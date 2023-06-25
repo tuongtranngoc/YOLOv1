@@ -2,12 +2,13 @@ import os
 import cv2
 import json
 import glob
+import xmltodict
 from .utils import *
 from tqdm import tqdm
+from ..config import CFG as cfg
+from easydict import EasyDict
 from collections import defaultdict
 from torch.utils.data import Dataset
-from easydict import EasyDict
-import xmltodict
 
 
 class BaseDatset(Dataset):
@@ -53,12 +54,14 @@ class BaseDatset(Dataset):
     def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
         print(f'Loading voc dataset from {txt_files}')
         dataset = []
-        id_map = json.load(open('dataset/VOC/VOCdevkit/label_to_id.json'))
+        id_map = json.load(open(cfg['VOC']['label2id']))
         if len(txt_files) > 0:
-            for txt_file, image_dir, anno_dir in zip(txt_files, image_dirs, anno_dirs):
+            for txt_file in txt_files:
                 image_ids = []
                 image_ids = open(txt_file).read().strip().split('\n')
-
+                root_dir = os.path.basename(txt_file).split('.txt')[0]
+                anno_dir = os.path.join(anno_dirs, root_dir)
+                image_dir = os.path.join(image_dirs, root_dir)
                 for im_id in tqdm(image_ids, desc="Parsing VOC data ..."):
                     anno_path = os.path.join(anno_dir, im_id + '.xml')
                     anno = EasyDict(xmltodict.parse(open(anno_path).read())).annotation

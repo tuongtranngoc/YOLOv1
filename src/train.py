@@ -51,7 +51,6 @@ class Trainer:
             shuffle=True,
             num_workers=self.cfg["n_workers"],
             pin_memory=False)
-        # self.val_loader = DataLoader(self.val_dataset, batch_size=self.cfg['bz_valid'], shuffle=False, num_workers=self.cfg['n_workers'])
 
     def create_model(self):
         self.model = YoloModel(
