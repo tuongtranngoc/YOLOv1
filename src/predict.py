@@ -36,7 +36,7 @@ class Predictor:
             out = self.model(image)
 
         pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
-        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.3, 0.3)
+        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.3, 0.4)
         image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
         cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
 
@@ -56,11 +56,11 @@ class Predictor:
 
 if __name__ == "__main__":
     predictor = Predictor()
-    image_ids = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/images_id/test2007.txt"
-    images = "/home/tuongtran/Researching/Object detection/YOLOv1/dataset/VOC/images/test2007"
-    with open(image_ids, 'r') as f_id:
+    IMAGE_ID = "dataset/VOC/images_id/test2007.txt"
+    IMAGE_PTH = "dataset/VOC/images/test2007"
+    with open(IMAGE_ID, 'r') as f_id:
         list_img_ids = f_id.readlines()
         for img_id in tqdm(list_img_ids):
             img_id = img_id.strip()
-            image_path = os.path.join(images, img_id + '.jpg')
+            image_path = os.path.join(IMAGE_PTH, img_id + '.jpg')
             result = predictor.predict(image_path)

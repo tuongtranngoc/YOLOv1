@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=-1 python -m src.eval
+CUDA_VISIBLE_DEVICES=0 python -m src.eval

@@ -70,7 +70,12 @@ class VocEval:
                 for j in range(images.size(0)):
                     pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out[j].unsqueeze(0))
                     gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(labels[j].unsqueeze(0))
-
+                    mask_obj = gt_conf > 0
+                    gt_bboxes = gt_bboxes[mask_obj]
+                    gt_conf = gt_conf[mask_obj]
+                    gt_cls = gt_cls[mask_obj]
+                    
+                    pred_bboxes = pred_bboxes
                     pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(
                         pred_bboxes,
                         pred_conf,
@@ -106,6 +111,7 @@ class VocEval:
     
 
 if __name__ == "__main__":
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     dataset = YoloDatset(
             cfg["VOC"]["image_path"],
             cfg["VOC"]["anno_path"],
@@ -114,9 +120,8 @@ if __name__ == "__main__":
             input_size=cfg["image_size"][0],
             backbone="vgg16",
             num_classes=cfg["C"],
-            pretrained=False).to('cpu')
-    ckpt = torch.load(cfg["last_ckpt_path"], map_location='cpu')
+            pretrained=False).to(device)
+    ckpt = torch.load(cfg["last_ckpt_path"], map_location=device)
     model.load_state_dict(ckpt["model"])
     eval = VocEval(dataset, model, cfg["bz_valid"], False, cfg["n_workers"], False)
     eval.evaluate()
-
