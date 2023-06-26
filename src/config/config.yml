@@ -19,7 +19,7 @@
 "VOC":
   "image_path": "dataset/VOC/images"
   "anno_path": "dataset/VOC/labels"
-  "txt_train_path": ["dataset/VOC/images_id/train2007.txt", "dataset/VOC/images_id/train2012.txt"]
+  "txt_train_path": ["dataset/VOC/images_id/trainval2007.txt", "dataset/VOC/images_id/trainval2012.txt"]
   "txt_val_path": ['dataset/VOC/images_id/test2007.txt']
   "label2id": "dataset/VOC/label_to_id.json"
 
@@ -28,7 +28,7 @@
 "bz_train": 22
 "bz_valid": 8
 "n_workers": 8
-"iou_thresh": 0.5
+"iou_thresh": 0.4
 "conf_thresh": 0.25
 
 ########################### Debugging ######################

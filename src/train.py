@@ -86,11 +86,8 @@ class Trainer:
                 mt_conf_loss.update(conf_loss.item())
                 mt_cls_loss.update(class_loss.item())
 
-                print(f"Epoch {epoch} Batch {bz+1}/{len(self.train_loader)}, \
-                                box_loss: {mt_box_loss.get_value(): .5f}, \
-                                conf_loss: {mt_conf_loss.get_value():.5f}, \
-                                class_loss: {mt_cls_loss.get_value():.5f}",
-                    end="\r")
+                print(f"Epoch {epoch} Batch {bz+1}/{len(self.train_loader)}, box_loss: {mt_box_loss.get_value(): .5f}, conf_loss: {mt_conf_loss.get_value():.5f}, class_loss: {mt_cls_loss.get_value():.5f}",
+                        end="\r")
 
                 Tensorboard.add_scalars(
                     "train",
@@ -99,9 +96,7 @@ class Trainer:
                     conf_loss=mt_conf_loss.get_value(),
                     cls_loss=mt_cls_loss.get_value())
 
-            print(f"[TRAIN] - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, \
-                                            conf_loss: {mt_conf_loss.get_value('mean'): .5f}, \
-                                            class_loss: {mt_cls_loss.get_value('mean'): .5f}")
+            print(f"[TRAIN] - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_conf_loss.get_value('mean'): .5f}, class_loss: {mt_cls_loss.get_value('mean'): .5f}")
 
             if epoch % self.cfg["eval_step"] == 0:
                 metrics = self.eval.evaluate()

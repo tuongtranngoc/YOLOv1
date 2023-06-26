@@ -70,6 +70,7 @@ class VocEval:
                 for j in range(images.size(0)):
                     pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out[j].unsqueeze(0))
                     gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(labels[j].unsqueeze(0))
+                    
                     mask_obj = gt_conf > 0
                     gt_bboxes = gt_bboxes[mask_obj]
                     gt_conf = gt_conf[mask_obj]
