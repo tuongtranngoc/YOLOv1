@@ -6,7 +6,7 @@ def get_config(yaml_pth='config.yml'):
             config = yaml.safe_load(f_cfg)
     except yaml.YAMLError as e:
         print(e)
-
+    
     return config
 
 CFG_PATH = 'src/config/config.yml'

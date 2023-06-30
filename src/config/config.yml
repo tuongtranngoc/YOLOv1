@@ -23,12 +23,12 @@
   "txt_val_path": ['dataset/VOC/images_id/test2007.txt']
   "label2id": "dataset/VOC/label_to_id.json"
 
-"epochs": 200
+"epochs": 150
 "eval_step": 5
-"bz_train": 22
+"bz_train": 24
 "bz_valid": 8
 "n_workers": 8
-"iou_thresh": 0.4
+"iou_thresh": 0.55
 "conf_thresh": 0.25
 
 ########################### Debugging ######################
@@ -38,8 +38,9 @@
 "dataset_debug": "exps/dataset"
 "valid_debug": "exps/valid"
 "prediction_debug": "exps/prediction"
-"last_ckpt_path": "src/weights/last.pt"
-"best_ckpt_path": "src/weights/best.pt"
+"last_ckpt_path": "src/weights/resnet18/last.pt"
+"best_ckpt_path": "src/weights/resnet18/best.pt"
 "conf_debug": 0.3
 "idxs_debug": [0, 1, 2, 3, 4, 5, 6, 7]
 "augmentation_debug": "exps/augmentation"
+"log_file": "logs/yolov1.log"

@@ -12,6 +12,8 @@ from .utils.visualization import Vizualization
 from torch.utils.data import DataLoader
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
+from .utils.logger import Logger
+logger = Logger.get_logger("EVALUATE")
 
 class VocEval:
     def __init__(self, dataset, model, bz, shuffle, num_workers, pin_men):
@@ -70,7 +72,7 @@ class VocEval:
                 for j in range(images.size(0)):
                     pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out[j].unsqueeze(0))
                     gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(labels[j].unsqueeze(0))
-                    
+
                     mask_obj = gt_conf > 0
                     gt_bboxes = gt_bboxes[mask_obj]
                     gt_conf = gt_conf[mask_obj]
@@ -98,15 +100,13 @@ class VocEval:
         metrics["eval_map_50"].update(mAP["map_50"])
         metrics["eval_map_75"].update(mAP["map_75"])
         
-        print(f'[EVALUATE] \
-            box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
+        logger.info(f'box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
             conf_loss: {metrics["eval_conf_loss"].get_value("mean"):.5f}, \
             cls_loss: {metrics["eval_cls_loss"].get_value("mean"):.5f}')
 
-        print(f'[EVALUATE] \
-            map: {metrics["eval_map"].get_value("mean"):.5f}, \
-            map_50: {metrics["eval_map_50"].get_value("mean"):.5f}, \
-            map_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
+        logger.info(f'mAP: {metrics["eval_map"].get_value("mean"):.5f}, \
+            mAP_50: {metrics["eval_map_50"].get_value("mean"):.5f}, \
+            mAP_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
 
         return metrics
     
@@ -122,7 +122,7 @@ if __name__ == "__main__":
             backbone="vgg16",
             num_classes=cfg["C"],
             pretrained=False).to(device)
-    ckpt = torch.load(cfg["last_ckpt_path"], map_location=device)
+    ckpt = torch.load(cfg["best_ckpt_path"], map_location=device)
     model.load_state_dict(ckpt["model"])
     eval = VocEval(dataset, model, cfg["bz_valid"], False, cfg["n_workers"], False)
     eval.evaluate()

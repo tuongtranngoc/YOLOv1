@@ -17,13 +17,16 @@ from .utils.losses import SumSquaredError
 from .models.modules.yolo import YoloModel
 from .utils.tensorboard import Tensorboard
 
+from .utils.logger import Logger
+logger = Logger.get_logger("TRAINING")
+
 
 class Trainer:
     def __init__(self) -> None:
         super().__init__()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.cfg = CFG
-        self.best_map = 0
+        self.best_map = 0.0
         self.create_model()
         self.create_dataloader()
         self.debuger = Debuger(self.cfg["training_debug"])
@@ -55,13 +58,13 @@ class Trainer:
     def create_model(self):
         self.model = YoloModel(
             input_size=self.cfg["image_size"][0],
-            backbone="vgg16",
+            backbone="resnet18",
             num_classes=self.cfg["C"],
             pretrained=True,).to(self.device)
         self.loss_fn = SumSquaredError().to(self.device)
-        self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
-        self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [75, 105], gamma=0.1)
-        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
+        #self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
+        #self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
 
     def train(self):
         for epoch in range(1, self.cfg["epochs"]):
@@ -92,11 +95,11 @@ class Trainer:
                 Tensorboard.add_scalars(
                     "train",
                     epoch,
-                    box_loss=mt_box_loss.get_value(),
-                    conf_loss=mt_conf_loss.get_value(),
-                    cls_loss=mt_cls_loss.get_value())
+                    box_loss=mt_box_loss.get_value('mean'),
+                    conf_loss=mt_conf_loss.get_value("mean"),
+                    cls_loss=mt_cls_loss.get_value("mean"))
 
-            print(f"[TRAIN] - Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_conf_loss.get_value('mean'): .5f}, class_loss: {mt_cls_loss.get_value('mean'): .5f}")
+            logger.info(f"Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_conf_loss.get_value('mean'): .5f}, class_loss: {mt_cls_loss.get_value('mean'): .5f}")
 
             if epoch % self.cfg["eval_step"] == 0:
                 metrics = self.eval.evaluate()
@@ -114,8 +117,8 @@ class Trainer:
                     mAP_50=metrics["eval_map_50"].get_value("mean"),
                     mAP_75=metrics["eval_map_75"].get_value("mean"))
 
-                if metrics["eval_map"].get_value("mean") > self.best_map:
-                    self.best_map = metrics["eval_map"].get_value("mean")
+                if metrics["eval_map_50"].get_value("mean") > self.best_map:
+                    self.best_map = metrics["eval_map_50"].get_value("mean")
                     self.save_ckpt(self.cfg["best_ckpt_path"], self.best_map, epoch)
                 self.save_ckpt(self.cfg["last_ckpt_path"], self.best_map, epoch)
 

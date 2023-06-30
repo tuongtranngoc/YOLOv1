@@ -100,9 +100,6 @@ class Debuger:
         
         pred = model(images)
 
-        # targets = targets.permute(0, 2, 1, 3)
-        # pred = pred.permute(0, 2, 1, 3)
-
         for i in range(images.size(0)):
             gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(targets[i].unsqueeze(0))
             gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
@@ -145,7 +142,6 @@ class Vizualization:
         images = BoxUtils.image_to_numpy(images)
         return images
     
-
     @classmethod
     def draw_debug(cls, image, bboxes, confs, classes, conf_thresh):
         image = cls.image2numpy(image)

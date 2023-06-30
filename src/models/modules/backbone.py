@@ -26,6 +26,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.layer5 = self._make_layer(block, 512, layers[4], stride=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -68,7 +69,8 @@ class ResNet(nn.Module):
         C3 = self.layer2(C2)
         C4 = self.layer3(C3)
         C5 = self.layer4(C4)
-        return C5
+        C6 = self.layer5(C5)
+        return C6
 
 
 class VGG16(nn.Module):
@@ -104,14 +106,14 @@ def build_backbone(arch_name="resnet18", pretrained=True):
     elif arch_name == "vgg16-bn":
         model = VGG16(batch_norm=True)
     elif arch_name == "resnet18":
-        model = ResNet(BasicBlock, [2, 2, 2, 2])
+        model = ResNet(BasicBlock, [2, 2, 2, 2, 2])
     elif arch_name == "resnet34":
-        model = ResNet(BasicBlock, [3, 4, 6, 3])
+        model = ResNet(BasicBlock, [3, 4, 6, 3, 3])
     elif arch_name == "resnet50":
-        model = ResNet(BottleNeck, [3, 4, 6, 3])
+        model = ResNet(BottleNeck, [3, 4, 6, 3, 3])
         feat_dims = 2048
     elif arch_name == "resnet101":
-        model = ResNet(BottleNeck, [3, 4, 23, 3])
+        model = ResNet(BottleNeck, [3, 4, 23, 3, 3])
         feat_dims = 2048
     else:
         raise RuntimeError("Only support model in [vgg16, vgg16_bn, resnet18, resnet34, resnet50, resnet101]")

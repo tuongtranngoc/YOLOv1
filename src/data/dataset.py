@@ -11,6 +11,9 @@ from collections import defaultdict
 from torch.utils.data import Dataset
 
 
+from ..data import logger
+
+
 class BaseDatset(Dataset):
     def __init__(self) -> None:
         pass
@@ -52,7 +55,7 @@ class BaseDatset(Dataset):
         return dataset
     
     def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
-        print(f'Loading voc dataset from {txt_files}')
+        logger.info(f'Loading voc dataset from {txt_files}')
         dataset = []
         id_map = json.load(open(cfg['VOC']['label2id']))
         if len(txt_files) > 0:

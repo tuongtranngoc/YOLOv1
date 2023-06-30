@@ -35,7 +35,7 @@ class YoloDatset(BaseDatset):
         return image, bboxes, labels
     
     def make_grid_cells(self, cls_ids, boxes):
-        S = self.cfg['S'] 
+        S = self.cfg['S']
         B = self.cfg['B']
         C = self.cfg['C']
         # Divide the input image into SXS grid cells

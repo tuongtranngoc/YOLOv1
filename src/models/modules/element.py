@@ -63,7 +63,6 @@ class BasicBlock(nn.Module):
         return out
 
 
-
 class BottleNeck(nn.Module):
     expansion = 4
     def __init__(self, in_channels, out_channels, stride=1, downsample=None):

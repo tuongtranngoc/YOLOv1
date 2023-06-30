@@ -17,7 +17,9 @@ class SumSquaredError(nn.Module):
         self.lambda_coord = lambda_coord
         self.lambda_noobj = lambda_noobj
         self.cfg = CFG
-        self.mse_loss_fn = nn.MSELoss()
+        self.bbox_loss = nn.MSELoss()
+        self.conf_loss = nn.MSELoss()
+        self.cls_loss = nn.MSELoss()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def forward(self, gt, pred):
@@ -42,13 +44,13 @@ class SumSquaredError(nn.Module):
 
         one_noobj_ij = ~one_obj_ij
         
-        box_loss = self.mse_loss_fn(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
+        box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 
-        obj_loss = self.mse_loss_fn(pred_conf[..., 0][one_obj_ij], gt_conf[..., 0][one_obj_ij])
+        obj_loss = self.conf_loss(pred_conf[..., 0][one_obj_ij], gt_conf[..., 0][one_obj_ij])
 
-        noobj_loss = self.mse_loss_fn(pred_conf[..., 0][one_noobj_ij], gt_conf[..., 0][one_noobj_ij])
+        noobj_loss = self.conf_loss(pred_conf[..., 0][one_noobj_ij], gt_conf[..., 0][one_noobj_ij])
          
-        cls_loss = self.mse_loss_fn(pred_cls[one_obj_i], gt_cls[one_obj_i])
+        cls_loss = self.cls_loss(pred_cls[one_obj_i], gt_cls[one_obj_i])
         
         box_loss = self.lambda_coord  * box_loss
 

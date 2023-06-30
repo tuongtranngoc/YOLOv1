@@ -21,7 +21,7 @@ class Predictor:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = YoloModel(
             input_size=cfg["image_size"][0],
-            backbone="vgg16",
+            backbone="resnet34",
             num_classes=cfg["C"],
             pretrained=False).to(self.device)
         self.model = self.load_weight(self.model, cfg["best_ckpt_path"])
