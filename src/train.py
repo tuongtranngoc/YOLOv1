@@ -73,9 +73,9 @@ class Trainer:
             logger.info("Resuming training ...")
             last_ckpt = os.path.join(cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')
             if os.path.exists(last_ckpt):
-                logger.info("Loading checkpoint ...")
                 ckpt = torch.load(last_ckpt, map_location=self.device)
                 self.start_epoch = self.resume_training(ckpt)
+                logger.info(f"Loading checkpoint with start epoch: {self.start_epoch}, best mAP_50: {self.best_map}")
                 
 
     def train(self):
