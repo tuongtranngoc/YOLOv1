@@ -1,4 +1,6 @@
+import os
 import torch
+import argparse
 from tqdm import tqdm
 
 from .config import CFG
@@ -111,7 +113,23 @@ class VocEval:
         return metrics
     
 
+def cli():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--weight_type', type=str, default='best.pt',
+                        help='weight type: best.pt/last.pt')
+    parser.add_argument('--model_type', type=str, default='resnet34',
+                        help='Model selection contain: vgg16, vgg16-bn, resnet18, resnet34')
+    parser.add_argument('--bz_eval', type=int, default=cfg['bz_valid'],
+                        help='Batch size valid dataset')
+    parser.add_argument('--n_workers', type=int, default=cfg['n_workers'],
+                        help='Number of workers')
+    
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
+    args = cli()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dataset = YoloDatset(
             cfg["VOC"]["image_path"],
@@ -119,10 +137,11 @@ if __name__ == "__main__":
             cfg["VOC"]["txt_val_path"])
     model = YoloModel(
             input_size=cfg["image_size"][0],
-            backbone="vgg16",
+            backbone=args.model_type,
             num_classes=cfg["C"],
             pretrained=False).to(device)
-    ckpt = torch.load(cfg["best_ckpt_path"], map_location=device)
+    ckpt_path = os.path.join(cfg['ckpt_dirpath'], args.model_type, args.weight_type)
+    ckpt = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(ckpt["model"])
-    eval = VocEval(dataset, model, cfg["bz_valid"], False, cfg["n_workers"], False)
+    eval = VocEval(dataset, model, args.bz_eval, False, args.n_workers, False)
     eval.evaluate()

@@ -38,8 +38,7 @@
 "dataset_debug": "exps/dataset"
 "valid_debug": "exps/valid"
 "prediction_debug": "exps/prediction"
-"last_ckpt_path": "src/weights/resnet18/last.pt"
-"best_ckpt_path": "src/weights/resnet18/best.pt"
+"ckpt_dirpath": "src/weights"
 "conf_debug": 0.3
 "idxs_debug": [0, 1, 2, 3, 4, 5, 6, 7]
 "augmentation_debug": "exps/augmentation"

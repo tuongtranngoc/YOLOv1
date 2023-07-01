@@ -1,1 +1,1 @@
-python -m src.train
+python -m src.train --resume --model_type resnet50

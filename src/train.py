@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import torch
+import argparse
 from torch.utils.data import DataLoader
 
 from src import CFG
@@ -22,11 +23,13 @@ logger = Logger.get_logger("TRAINING")
 
 
 class Trainer:
-    def __init__(self) -> None:
+    def __init__(self, args) -> None:
         super().__init__()
+        self.args = args
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.cfg = CFG
         self.best_map = 0.0
+        self.start_epoch = 1
         self.create_model()
         self.create_dataloader()
         self.debuger = Debuger(self.cfg["training_debug"])
@@ -58,16 +61,25 @@ class Trainer:
     def create_model(self):
         self.model = YoloModel(
             input_size=self.cfg["image_size"][0],
-            backbone="resnet18",
+            backbone=self.args.model_type,
             num_classes=self.cfg["C"],
             pretrained=True,).to(self.device)
         self.loss_fn = SumSquaredError().to(self.device)
-        #self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
-        #self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
+        self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
+        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
+
+        if self.args.resume:
+            logger.info("Resuming training ...")
+            last_ckpt = os.path.join(cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')
+            if os.path.exists(last_ckpt):
+                logger.info("Loading checkpoint ...")
+                ckpt = torch.load(last_ckpt, map_location=self.device)
+                self.start_epoch = self.resume_training(ckpt)
+                
 
     def train(self):
-        for epoch in range(1, self.cfg["epochs"]):
+        for epoch in range(self.start_epoch, self.cfg["epochs"]):
             mt_box_loss = BatchMeter()
             mt_conf_loss = BatchMeter()
             mt_cls_loss = BatchMeter()
@@ -119,8 +131,11 @@ class Trainer:
 
                 if metrics["eval_map_50"].get_value("mean") > self.best_map:
                     self.best_map = metrics["eval_map_50"].get_value("mean")
-                    self.save_ckpt(self.cfg["best_ckpt_path"], self.best_map, epoch)
-                self.save_ckpt(self.cfg["last_ckpt_path"], self.best_map, epoch)
+                    best_ckpt = os.path.join(self.cfg['ckpt_dirpath'], self.args.model_type, 'best.pt')
+                    self.save_ckpt(best_ckpt, self.best_map, epoch)
+
+            last_ckpt = os.path.join(self.cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')
+            self.save_ckpt(last_ckpt, self.best_map, epoch)
 
             # Debug image at each training time
             with torch.no_grad():
@@ -148,12 +163,33 @@ class Trainer:
         ckpt_dict = {
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
-            "best_acc": best_acc,
+            "best_map50": best_acc,
             "epoch": epoch,
         }
+        logger.info(f"Saving checkpoint to {save_path}")
         torch.save(ckpt_dict, save_path)
+    
+    def resume_training(self, ckpt):
+        self.best_map = ckpt['best_map50']
+        start_epoch = ckpt['epoch'] + 1
+        self.optimizer.load_state_dict(ckpt['optimizer'])
+        self.model.load_state_dict(ckpt['model'])
+
+        return start_epoch
+
+
+def cli():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_type', type=str, default='resnet50',
+                        help='Model selection contain: vgg16, vgg16-bn, resnet18, resnet34')
+    parser.add_argument('--resume', nargs='?', const=True, default=False, 
+                        help='Resume most recent training')
+    
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
-    trainer = Trainer()
+    args = cli()
+    trainer = Trainer(args)
     trainer.train()
