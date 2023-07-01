@@ -118,7 +118,7 @@ def cli():
     parser.add_argument('--weight_type', type=str, default='best.pt',
                         help='weight type: best.pt/last.pt')
     parser.add_argument('--model_type', type=str, default='resnet34',
-                        help='Model selection contain: vgg16, vgg16-bn, resnet18, resnet34')
+                        help='Model selection contain: vgg16, vgg16-bn, resnet18, resnet34, resnet50')
     parser.add_argument('--bz_eval', type=int, default=cfg['bz_valid'],
                         help='Batch size valid dataset')
     parser.add_argument('--n_workers', type=int, default=cfg['n_workers'],
