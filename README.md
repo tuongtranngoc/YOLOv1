@@ -6,7 +6,7 @@ YOLOv1 is new approach to object detection as a regression problem to spatially 
 <div align="center">
   <p>
     <a align="center" href="https://arxiv.org/pdf/1506.02640.pdf" target="_blank">
-      <img width="100%" src="images/YOLO.png"></a>
+      <img width="70%" src="images/YOLO.png"></a>
   </p>
 </div>
 

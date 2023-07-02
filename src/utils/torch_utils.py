@@ -22,10 +22,31 @@ def compute_iou(target, pred):
     return intersects
 
 
+def compute_CIoU(target, pred):
+    x = BoxUtils.decode_yolo(target[..., :4])
+    y = BoxUtils.decode_yolo(pred[..., :4])
+
+    x1 = torch.max(x[..., 0], y[..., 0])
+    y1 = torch.max(x[..., 1], y[..., 1])
+    x2 = torch.min(x[..., 2], y[..., 2])
+    y2 = torch.min(x[..., 3], y[..., 3])
+    intersects = torch.clamp((x2-x1), 0) * torch.clamp((y2-y1), 0)
+    unions = abs((x[..., 2] - x[..., 0]) * (x[..., 3] - x[..., 1])) + abs((y[..., 2] - y[..., 0]) * (y[..., 3] - y[..., 1])) - intersects
+    intersects[intersects.gt(0)] = intersects[intersects.gt(0)] / unions[intersects.gt(0)]
+    
+    cx1 = torch.min(x[..., 0], y[..., 0])
+    cy1 = torch.min(x[..., 1], y[..., 1])
+    cx2 = torch.max(x[..., 2], y[..., 2])
+    cy2 = torch.max(x[..., 3], y[..., 3])
+    c_intersects = (cx2-cx1) * (cy2-cy1)
+
+    return intersects - (c_intersects - unions) / c_intersects
+
+
 class BoxUtils:
     S = cfg['S']
     B = cfg['B']
-    C = cfg['C'] 
+    C = cfg['C']
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     @classmethod
     def decode_yolo(cls, bboxes):
