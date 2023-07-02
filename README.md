@@ -4,11 +4,10 @@
 YOLOv1 is new approach to object detection as a regression problem to spatially separated bounding boxes and associated class probabilities. YOLO is extremely fast, YOLO sees the entire image during training and test time so it implicitly encodes contextual information about classes as well as their appearance.
 
 ## Update news
-+ `2023/07/02`: Update GIoU, DIoU, CIoU
 + `2023/07/01`: Update model weights Resnet18, Resnet34, Resnet50
 
 
-## Experiment Tables
+## Experiment Table
 
 | Backbone | Dataset | Training dataset | Valid dataset | Image size | mAP | mAP_50 | mAP_75 | Files |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
