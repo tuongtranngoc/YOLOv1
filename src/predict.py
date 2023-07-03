@@ -65,6 +65,9 @@ def cli():
     parser.add_argument('--input_folder', type=str,
                         help='Path to input images')
 
+    args = parser.parse_args()
+    return args
+
 
 if __name__ == "__main__":
     args = cli()

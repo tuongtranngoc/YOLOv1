@@ -65,10 +65,10 @@ class Trainer:
             num_classes=self.cfg["C"],
             pretrained=True,).to(self.device)
         self.loss_fn = SumSquaredError().to(self.device)
-        self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
-        self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
-        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
-
+        #self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
+        #self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
+        
         if self.args.resume:
             logger.info("Resuming training ...")
             last_ckpt = os.path.join(cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')

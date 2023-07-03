@@ -40,11 +40,11 @@ class AlbumAug:
         self.transform = A.Compose([
             A.BBoxSafeRandomCrop(p=0.3),
             A.HorizontalFlip(p=0.5),
-            A.Affine(p=0.3),
+            A.Affine(p=0.3, rotate=15),
             A.ShiftScaleRotate(p=0.2, rotate_limit=15),
             A.Blur(p=0.01),
             # A.MedianBlur(p=0.01),
-            A.ToGray(p=0.01),
+            # A.ToGray(p=0.01),
             # A.RandomBrightnessContrast(p=0.3),
             # A.HueSaturationValue()
             #A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=0.3),
