@@ -12,11 +12,12 @@ from .torch_utils import *
 
 
 class SumSquaredError(nn.Module):
-    def __init__(self, lambda_coord=5.0, lambda_noobj=0.5) -> None:
+    def __init__(self, lambda_coord=0.1, lambda_noobj=0.5, GIoU=False) -> None:
         super(SumSquaredError, self).__init__()
         self.lambda_coord = lambda_coord
         self.lambda_noobj = lambda_noobj
         self.cfg = CFG
+        self.GIoU = GIoU
         self.bbox_loss = nn.MSELoss()
         self.conf_loss = nn.MSELoss()
         self.cls_loss = nn.MSELoss()
@@ -33,7 +34,7 @@ class SumSquaredError(nn.Module):
         
         one_obj_ij = (gt_conf[..., 0] == 1)
         one_obj_i = (gt_conf[..., 0] == 1)[..., 0]  
-            
+        
         idxs = torch.where(one_obj_i==True)
         for bz, j, i in zip(*idxs):
             bz, j, i = bz.item(), j.item(), i.item()
@@ -43,8 +44,13 @@ class SumSquaredError(nn.Module):
             gt_conf[bz, j, i, max_idx, 0] = max_ious[bz, j, i]
 
         one_noobj_ij = ~one_obj_ij
-        
-        box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
+
+        if self.GIoU:
+            box_loss = 1 - compute_GIoU(gt_bboxes, pred_bboxes)
+            box_loss = box_loss[one_obj_ij].mean()
+            self.lambda_coord = 1
+        else:
+            box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 
         obj_loss = self.conf_loss(pred_conf[..., 0][one_obj_ij], gt_conf[..., 0][one_obj_ij])
 

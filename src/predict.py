@@ -38,7 +38,7 @@ class Predictor:
             out = self.model(image)
 
         pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
-        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, 0.3, 0.4)
+        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, self.args.iou_thresh, self.args.conf_thresh)
         image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
         cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
 
@@ -64,6 +64,10 @@ def cli():
                         help='Path to model weight')
     parser.add_argument('--input_folder', type=str,
                         help='Path to input images')
+    parser.add_argument('--conf_thresh', type=float, default=cfg['conf_thresh'],
+                        help='Confidence threshold for nms')
+    parser.add_argument('--iou_thresh', type=float, default=cfg['iou_thresh'],
+                        help='IoU threshold for nms')
 
     args = parser.parse_args()
     return args

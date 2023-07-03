@@ -69,7 +69,7 @@ class YoloDatset(BaseDatset):
                 (y_c - (pos_j * grid_cell_j)) / grid_cell_j, 
                 np.sqrt((x_max - x_min) / self.image_size[0]), 
                 np.sqrt((y_max - y_min) / self.image_size[1])]).repeat(B)
-            
+        
             # Assign bboxes to each grid cell
             grid_cell = torch.cat([box, conf_cls, p_cls], dim=-1)
             target_cxcywh[pos_j, pos_i, :] = grid_cell
