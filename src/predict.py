@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
+import argparse
 from tqdm import tqdm
 
 from .config import CFG as cfg
@@ -11,7 +12,8 @@ from .models.modules.yolo import YoloModel
 
 
 class Predictor:
-    def __init__(self) -> None:
+    def __init__(self, args) -> None:
+        self.args = args
         self.transform = A.Compose(
             [
                 A.Resize(cfg["image_size"][0], cfg["image_size"][1]),
@@ -21,10 +23,10 @@ class Predictor:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = YoloModel(
             input_size=cfg["image_size"][0],
-            backbone="resnet34",
+            backbone=self.args.model_type,
             num_classes=cfg["C"],
             pretrained=False).to(self.device)
-        self.model = self.load_weight(self.model, cfg["best_ckpt_path"])
+        self.model = self.load_weight(self.model, self.args.weight_path)
 
     def predict(self, image_pth):
         image = cv2.imread(image_pth)
@@ -54,8 +56,22 @@ class Predictor:
             raise Exception(f"Path to model {weight_path} not exist")
 
 
+def cli():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_type', type=str, default='resnet34',
+                        help='Model selection: resnet18, resnet34, resnet50')
+    parser.add_argument('--weight_path', type=str, 
+                        help='Path to model weight')
+    parser.add_argument('--input_folder', type=str,
+                        help='Path to input images')
+
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
-    predictor = Predictor()
+    args = cli()
+    predictor = Predictor(args)
     IMAGE_ID = "dataset/VOC/images_id/test2007.txt"
     IMAGE_PTH = "dataset/VOC/images/test2007"
     with open(IMAGE_ID, 'r') as f_id:
