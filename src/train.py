@@ -146,7 +146,7 @@ class Trainer:
                     "train",
                     self.device,
                     self.cfg["conf_debug"],
-                    False,
+                    True,
                 )
                 self.debuger.debug_output(
                     self.val_dataset,
