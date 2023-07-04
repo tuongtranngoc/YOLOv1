@@ -29,7 +29,7 @@ class VocEval:
         self.num_workers = num_workers
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.loss_fn = SumSquaredError().to(self.device)
+        self.loss_fn = SumSquaredError(GIoU=True).to(self.device)
         self.dataloader = DataLoader(
             self.dataset,
             self.bz,

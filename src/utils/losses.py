@@ -48,7 +48,7 @@ class SumSquaredError(nn.Module):
         if self.GIoU:
             box_loss = 1 - compute_GIoU(gt_bboxes, pred_bboxes)
             box_loss = box_loss[one_obj_ij].mean()
-            self.lambda_coord = 1
+            self.lambda_coord = 1.0
         else:
             box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 
