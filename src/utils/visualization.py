@@ -54,9 +54,12 @@ class Drawer:
     def draw_box_label(self, bbox, conf, label):
         _bbox = self.unnormalize_bboxes(bbox)
         _label = self.id2classes[label+1]
+    
         if self.type_label == 'gt': 
             color = class2color('groundtruth')
+            _text = _label
         else:
+            _text = _label + '-' + str(round(conf, 3))
             color = class2color(_label) if self.is_impt else class2color('background')
 
         cv2.rectangle(self.image, \
@@ -67,7 +70,7 @@ class Drawer:
                     lineType=cv2.LINE_AA)
 
         cv2.putText(self.image,
-                    _label + '-' + str(round(conf, 3)), \
+                    _text,
                     (int(_bbox[0]), int(_bbox[1]+0.025*cfg['image_size'][0])),
                     0,
                     self.lw / 3,
@@ -102,15 +105,18 @@ class Debuger:
 
         for i in range(images.size(0)):
             gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(targets[i].unsqueeze(0))
-            gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
-
             pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(pred[i].unsqueeze(0))
+
+            if apply_mns is True:
+                pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
+
+            gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
             pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)
             
             image = images[i]
 
-            image = Vizualization.draw_debug(image, gt_bboxes, gt_conf, gt_cls, conf_thresh)
-            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, conf_thresh)
+            image = Vizualization.draw_debug(image, gt_bboxes, gt_conf, gt_cls, conf_thresh, 'gt')
+            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, conf_thresh, 'pred')
             cv2.imwrite(f'{self.save_debug_path}/{type_infer}/{i}.png', image)
 
 
@@ -143,10 +149,10 @@ class Vizualization:
         return images
     
     @classmethod
-    def draw_debug(cls, image, bboxes, confs, classes, conf_thresh):
+    def draw_debug(cls, image, bboxes, confs, classes, conf_thresh, type_draw='pred'):
         image = cls.image2numpy(image)
         bboxes, confs, classes = cls.label2numpy(bboxes, confs, classes)
         for bbox, conf, label in zip(bboxes, confs, classes):
             if conf >= conf_thresh:
-                image = Drawer(image, True, 'pred').draw_box_label(bbox, conf, label)
+                image = Drawer(image, True, type_draw).draw_box_label(bbox, conf, label)
         return image

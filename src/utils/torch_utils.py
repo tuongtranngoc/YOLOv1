@@ -22,7 +22,7 @@ def compute_iou(target, pred):
     return intersects
 
 
-def compute_CIoU(target, pred):
+def compute_GIoU(target, pred):
     x = BoxUtils.decode_yolo(target[..., :4])
     y = BoxUtils.decode_yolo(pred[..., :4])
 
