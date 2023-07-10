@@ -29,7 +29,7 @@ class VocEval:
         self.num_workers = num_workers
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.loss_fn = SumSquaredError(GIoU=True).to(self.device)
+        self.loss_fn = SumSquaredError(apply_IoU=self.cfg["apply_IoU"]).to(self.device)
         self.dataloader = DataLoader(
             self.dataset,
             self.bz,
@@ -40,7 +40,7 @@ class VocEval:
     def cal_mAP(self, map_mt, pred_bbox, pred_conf, pred_cls, gt_bbox, gt_conf, gt_cls):
         """https://torchmetrics.readthedocs.io/en/stable/detection/mean_average_precision.html"""
         preds = [{"boxes": pred_bbox, "scores": pred_conf, "labels": pred_cls}]
-
+        
         target = [{"boxes": gt_bbox, "scores": gt_conf, "labels": gt_cls}]
 
         map_mt.update(preds, target)
@@ -66,7 +66,6 @@ class VocEval:
             with torch.no_grad():
                 out = self.model(images)
                 box_loss, conf_loss, cls_loss = self.loss_fn(labels, out)
-
                 metrics["eval_box_loss"].update(box_loss)
                 metrics["eval_conf_loss"].update(conf_loss)
                 metrics["eval_cls_loss"].update(cls_loss)

@@ -30,6 +30,7 @@
 "n_workers": 8
 "iou_thresh": 0.6
 "conf_thresh": 0.25
+"apply_IoU": "DIoU"
 
 ########################### Debugging ######################
 "tensorboard_debug": "exps/tensorboard"

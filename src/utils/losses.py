@@ -12,12 +12,12 @@ from .torch_utils import *
 
 
 class SumSquaredError(nn.Module):
-    def __init__(self, lambda_coord=0.1, lambda_noobj=0.5, GIoU=False) -> None:
+    def __init__(self, lambda_coord=5.0, lambda_noobj=0.5, apply_IoU=None) -> None:
         super(SumSquaredError, self).__init__()
         self.lambda_coord = lambda_coord
         self.lambda_noobj = lambda_noobj
         self.cfg = CFG
-        self.GIoU = GIoU
+        self.apply_IoU = apply_IoU
         self.bbox_loss = nn.MSELoss()
         self.conf_loss = nn.MSELoss()
         self.cls_loss = nn.MSELoss()
@@ -29,7 +29,7 @@ class SumSquaredError(nn.Module):
         pred_bboxes, pred_conf, pred_cls = BoxUtils.reshape_data(pred)
         
         gt_bboxes = gt_bboxes.clone()
-        ious = compute_iou(gt_bboxes, pred_bboxes)
+        ious = IoULoss.compute_iou(gt_bboxes, pred_bboxes)
         max_ious, max_idxs = torch.max(ious, dim=-1)
         
         one_obj_ij = (gt_conf[..., 0] == 1)
@@ -44,9 +44,14 @@ class SumSquaredError(nn.Module):
             gt_conf[bz, j, i, max_idx, 0] = max_ious[bz, j, i]
 
         one_noobj_ij = ~one_obj_ij
-
-        if self.GIoU:
-            box_loss = 1 - compute_GIoU(gt_bboxes, pred_bboxes)
+            
+        if self.apply_IoU is not None:
+            if self.apply_IoU=="GIoU":
+                box_loss = 1 - IoULoss.compute_GIoU(gt_bboxes, pred_bboxes)
+            elif self.apply_IoU=="DIoU":
+                box_loss = 1 - IoULoss.compute_DIoU(gt_bboxes, pred_bboxes)
+            else:
+                raise Exception("If using apply_IoU, Please use one of following loss functions: GIoU, DIoU, CIoU")
             box_loss = box_loss[one_obj_ij].mean()
             self.lambda_coord = 1.0
         else:
