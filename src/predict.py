@@ -27,7 +27,7 @@ class Predictor:
             num_classes=cfg["C"],
             pretrained=False).to(self.device)
         self.model = self.load_weight(self.model, self.args.weight_path)
-
+    
     def predict(self, image_pth):
         image = cv2.imread(image_pth)
         image = self._tranform(image)

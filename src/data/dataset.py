@@ -73,6 +73,7 @@ class BaseDatset(Dataset):
                         anno.object = [anno.object]
                     bboxes = []
                     for item in anno.object:
+                        # if item.difficult == '1': continue
                         box = item.bndbox
                         box = [box.xmin, box.ymin, box.xmax, box.ymax]
                         box = [eval(c) for c in box]
