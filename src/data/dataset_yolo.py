@@ -54,9 +54,8 @@ class YoloDatset(BaseDatset):
             pos_i = int(x_c // grid_cell_i)
             pos_j = int(y_c // grid_cell_j)
 
-            if target_cxcywh[pos_j, pos_i, 4] > 0 or target_cxcywh[pos_j, pos_i, 5] > 0:
+            if target_cxcywh[pos_j, pos_i, 8] > 0 or target_cxcywh[pos_j, pos_i, 9] > 0:
                 continue
-
             # Each grid cell contains:
             #   bbox1: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
             #   bbox2: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]

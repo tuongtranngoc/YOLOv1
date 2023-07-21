@@ -36,17 +36,17 @@ class Predictor:
         self.model.eval()
         with torch.no_grad():
             out = self.model(image)
-
-        pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
-        pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, self.args.iou_thresh, self.args.conf_thresh)
-        image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
-        cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
+            pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
+            pred_bboxes, pred_conf, pred_cls = pred_bboxes.reshape((-1, 4)), pred_conf.reshape(-1), pred_cls.reshape(-1)
+            pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, self.args.iou_thresh, self.args.conf_thresh)
+            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
+            cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
 
     def _tranform(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = self.transform(image=image)
         return image["image"]
-
+    
     def load_weight(self, model, weight_path):
         if os.path.exists(weight_path):
             ckpt = torch.load(weight_path, map_location=self.device)

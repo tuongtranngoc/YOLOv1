@@ -39,7 +39,9 @@ class Trainer:
             self.cfg["bz_valid"],
             False,
             self.cfg["n_workers"],
-            False)
+            False,
+            self.cfg['iou_thresh'],
+            self.cfg['conf_thresh'])
 
     def create_dataloader(self):
         self.train_dataset = YoloDatset(

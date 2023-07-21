@@ -106,7 +106,9 @@ class Debuger:
         for i in range(images.size(0)):
             gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(targets[i].unsqueeze(0))
             pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(pred[i].unsqueeze(0))
-
+            gt_bboxes, gt_conf, gt_cls = gt_bboxes.reshape((-1, 4)), gt_conf.reshape(-1), gt_cls.reshape(-1)
+            pred_bboxes, pred_conf, pred_cls = pred_bboxes.reshape((-1, 4)), pred_conf.reshape(-1), pred_cls.reshape(-1)
+            
             if apply_mns is True:
                 pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
 
@@ -130,9 +132,9 @@ class Vizualization:
     @classmethod
     def reshape_data(cls, out):
         pred_bboxes = out[..., :8]
-        pred_confs = out[..., 8:10].reshape(-1)
-        pred_cls = torch.argmax(out[..., 10:], dim=-1).unsqueeze(-1).expand((-1, -1, -1, 2)).reshape(-1)
-        pred_bboxes = BoxUtils.decode_yolo(pred_bboxes.reshape(-1, cls.S, cls.S, cls.B, 4)).reshape((-1, 4))
+        pred_confs = out[..., 8:10]
+        pred_cls = torch.argmax(out[..., 10:], dim=-1).unsqueeze(-1).expand((-1, -1, -1, 2))
+        pred_bboxes = BoxUtils.decode_yolo(pred_bboxes.reshape(-1, cls.S, cls.S, cls.B, 4))
 
         return pred_bboxes, pred_confs, pred_cls
     
