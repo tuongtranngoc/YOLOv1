@@ -42,7 +42,7 @@ class YoloDatset(BaseDatset):
         grid_cell_i = self.image_size[0] / S
         grid_cell_j = self.image_size[1] / S
         # Define input shape
-        target_cxcywh = torch.zeros((S, S, 5*B + C), dtype=torch.float32)
+        target_cxcywh = torch.zeros((S, S, 5 * B + C), dtype=torch.float32)
         
         for class_id, bbox in zip(cls_ids, boxes):
             x_min, y_min, x_max, y_max = bbox.copy()
@@ -60,7 +60,7 @@ class YoloDatset(BaseDatset):
             #   bbox1: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
             #   bbox2: [x_c, y_c, w_box, h_box, p_c, p0, p1, ..., pn]
             
-            p_cls = torch.zeros(C)
+            p_cls = torch.zeros(C, dtype=torch.float32)
             p_cls[int(class_id)-1] = 1.0
             conf_cls = torch.ones((2, )).long()
             box = torch.FloatTensor([

@@ -40,9 +40,9 @@ class SumSquaredError(nn.Module):
             bz, j, i = bz.item(), j.item(), i.item()
             max_idx = max_idxs[bz, j, i]
             one_obj_ij[bz, j, i, 1-max_idx] = False
-            gt_conf[bz, j, i, 1-max_idx, 0] = 0
             gt_conf[bz, j, i, max_idx, 0] = max_ious[bz, j, i]
-
+            gt_conf[bz, j, i, 1-max_idx, 0] = 0
+        
         one_noobj_ij = ~one_obj_ij
             
         if self.apply_IoU is not None:
@@ -53,7 +53,7 @@ class SumSquaredError(nn.Module):
             else:
                 raise Exception("If using apply_IoU, Please use one of following loss functions: GIoU, DIoU, CIoU")
             box_loss = box_loss[one_obj_ij].mean()
-            self.lambda_coord = 1.0
+            self.lambda_coord = 1
         else:
             box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 

@@ -53,7 +53,7 @@ class BaseDatset(Dataset):
             dataset.append([img, np.array(bboxes)])
         
         return dataset
-    
+
     def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
         logger.info(f'Loading voc dataset from {txt_files}')
         dataset = []
@@ -73,7 +73,7 @@ class BaseDatset(Dataset):
                         anno.object = [anno.object]
                     bboxes = []
                     for item in anno.object:
-                        # if item.difficult == '1': continue
+                        if item.difficult == '1' or item.name not in id_map: continue
                         box = item.bndbox
                         box = [box.xmin, box.ymin, box.xmax, box.ymax]
                         box = [eval(c) for c in box]
