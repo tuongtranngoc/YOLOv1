@@ -14,13 +14,13 @@ from .torch_utils import *
 class SumSquaredError(nn.Module):
     def __init__(self, lambda_coord=5.0, lambda_noobj=0.5, apply_IoU=None) -> None:
         super(SumSquaredError, self).__init__()
-        self.lambda_coord = lambda_coord
-        self.lambda_noobj = lambda_noobj
         self.cfg = CFG
         self.apply_IoU = apply_IoU
+        self.cls_loss = nn.MSELoss()
         self.bbox_loss = nn.MSELoss()
         self.conf_loss = nn.MSELoss()
-        self.cls_loss = nn.MSELoss()
+        self.lambda_coord = lambda_coord
+        self.lambda_noobj = lambda_noobj
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def forward(self, gt, pred):
@@ -28,10 +28,13 @@ class SumSquaredError(nn.Module):
         gt_bboxes, gt_conf, gt_cls = BoxUtils.reshape_data(gt)
         pred_bboxes, pred_conf, pred_cls = BoxUtils.reshape_data(pred)
         
+        # Compute IOU between GT and PRED
         gt_bboxes = gt_bboxes.clone()
         ious = IoULoss.compute_iou(gt_bboxes, pred_bboxes)
         max_ious, max_idxs = torch.max(ious, dim=-1)
         
+        # Create responsible for predicting for each object based on 
+        # prediction has the highest current IOU with GT
         one_obj_ij = (gt_conf[..., 0] == 1)
         one_obj_i = (gt_conf[..., 0] == 1)[..., 0]  
         
@@ -44,7 +47,8 @@ class SumSquaredError(nn.Module):
             gt_conf[bz, j, i, 1-max_idx, 0] = 0
         
         one_noobj_ij = ~one_obj_ij
-            
+        
+        # Apply IOU loss for bounding box regression
         if self.apply_IoU is not None:
             if self.apply_IoU=="GIoU":
                 box_loss = 1 - IoULoss.compute_GIoU(gt_bboxes, pred_bboxes)
@@ -57,14 +61,15 @@ class SumSquaredError(nn.Module):
         else:
             box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
 
+        # object loss
         obj_loss = self.conf_loss(pred_conf[..., 0][one_obj_ij], gt_conf[..., 0][one_obj_ij])
 
         noobj_loss = self.conf_loss(pred_conf[..., 0][one_noobj_ij], gt_conf[..., 0][one_noobj_ij])
-         
+        # class loss
         cls_loss = self.cls_loss(pred_cls[one_obj_i], gt_cls[one_obj_i])
-        
+        # bounding box loss
         box_loss = self.lambda_coord  * box_loss
-
+        # confidence loss
         conf_loss = (self.lambda_noobj * noobj_loss + obj_loss)
         
         return box_loss, conf_loss, cls_loss

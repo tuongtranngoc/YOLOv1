@@ -2,6 +2,8 @@ import numpy as np
 
 
 class BatchMeter(object):
+    """Calculate average/sum value after each time
+    """
     def __init__(self) -> None:
         self.reset()
 

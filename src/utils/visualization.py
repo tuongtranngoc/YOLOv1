@@ -89,7 +89,7 @@ class Debuger:
         self.cfg = cfg
         self.save_debug_path = save_debug_path
 
-    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, apply_mns=False):
+    def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, apply_mns=True):
         os.makedirs(f'{self.save_debug_path}/{type_infer}', exist_ok=True)
         model.eval()
         images, targets = [], []
