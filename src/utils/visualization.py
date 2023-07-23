@@ -110,8 +110,14 @@ class Debuger:
             pred_bboxes, pred_conf, pred_cls = pred_bboxes.reshape((-1, 4)), pred_conf.reshape(-1), pred_cls.reshape(-1)
             
             if apply_mns is True:
-                pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
-                gt_bboxes, gt_conf, gt_cls = BoxUtils.nms(gt_bboxes, gt_conf, pred_cls, iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
+                pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, 
+                                                                pred_conf, 
+                                                                pred_cls, 
+                                                                iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
+                gt_bboxes, gt_conf, gt_cls = BoxUtils.nms(gt_bboxes, 
+                                                          gt_conf, 
+                                                          pred_cls, 
+                                                          iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
 
             gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
             pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)

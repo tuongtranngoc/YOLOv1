@@ -20,13 +20,10 @@ YOLOv1 is new approach to object detection as a regression problem to spatially 
 
 | Backbone | Dataset | Training dataset | Valid dataset | Image size | mAP | mAP_50 | mAP_75 | Files |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|VGG16|PASCAL VOC|trainval 2007+2012|test2007|448x448|--|--|--|--|
-|ResNet18|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.31|0.55|0.31|--|
-|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.35|0.57|0.36|--|
-|ResNet34|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.35|0.58|0.35|--|
-|ResNet34 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.38|0.59|0.40|--|
-|ResNet50|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.32|0.60|0.31|--|
-|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.39|0.62|0.41|--|
+|Original paper|PASCAL VOC|trainval 2007+2012|test2007|448x448|--|63.4|--|--|
+|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.39|0.62|0.41|--|
+|ResNet34 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.41|0.65|0.43|--|
+|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.43|0.67|0.45|--|
 
 ## Dataset
 + Download Pascal VOC train+val 2012+2007
