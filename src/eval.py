@@ -104,7 +104,7 @@ class VocEval:
                         gt_bboxes,
                         gt_conf,
                         gt_cls)
-
+        
         mAP = map_mt.compute()
         metrics["eval_map"].update(mAP["map"])
         metrics["eval_map_50"].update(mAP["map_50"])

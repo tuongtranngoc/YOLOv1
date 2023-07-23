@@ -34,6 +34,7 @@ class Predictor:
         image = image.to(self.device)
         image = image.unsqueeze(0)
         self.model.eval()
+        
         with torch.no_grad():
             out = self.model(image)
             pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
@@ -64,6 +65,8 @@ def cli():
                         help='Path to model weight')
     parser.add_argument('--input_folder', type=str,
                         help='Path to input images')
+    parser.add_argument('--output_folder', type=str,
+                        help='Path to predicted output')
     parser.add_argument('--conf_thresh', type=float, default=cfg['conf_thresh'],
                         help='Confidence threshold for nms')
     parser.add_argument('--iou_thresh', type=float, default=cfg['iou_thresh'],
