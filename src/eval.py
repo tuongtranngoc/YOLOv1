@@ -18,7 +18,7 @@ from .utils.logger import Logger
 logger = Logger.get_logger("EVALUATE")
 
 class VocEval:
-    def __init__(self, dataset, model, bz, shuffle, num_workers, pin_men):
+    def __init__(self, dataset, model, bz, shuffle, num_workers, pin_men, iou_thresh, conf_thresh):
         super().__init__()
         self.bz = bz
         self.cfg = CFG
@@ -27,6 +27,8 @@ class VocEval:
         self.shuffle = shuffle
         self.pin_men = pin_men
         self.num_workers = num_workers
+        self.iou_thresh = iou_thresh
+        self.conf_thresh = conf_thresh
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.loss_fn = SumSquaredError(apply_IoU=self.cfg["apply_IoU"]).to(self.device)
@@ -61,31 +63,38 @@ class VocEval:
         self.model.eval()
         
         for i, (images, labels) in enumerate(tqdm(self.dataloader)):
-            images = images.to(self.device)
-            labels = labels.to(self.device)
             with torch.no_grad():
+                images = images.to(self.device)
+                labels = labels.to(self.device)
                 out = self.model(images)
-                box_loss, conf_loss, cls_loss = self.loss_fn(labels, out)
+                bz = images.size(0)
+                box_loss, conf_loss, cls_loss = self.loss_fn(labels.clone(), out)
                 metrics["eval_box_loss"].update(box_loss)
                 metrics["eval_conf_loss"].update(conf_loss)
                 metrics["eval_cls_loss"].update(cls_loss)
 
-                for j in range(images.size(0)):
+                for j in range(bz):
                     pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out[j].unsqueeze(0))
+                    pred_bboxes = pred_bboxes.reshape((-1, 4))
+                    pred_cls = pred_cls.reshape(-1)
+                    pred_conf = pred_conf.reshape(-1)
+
                     gt_bboxes, gt_conf, gt_cls = Vizualization.reshape_data(labels[j].unsqueeze(0))
+                    gt_bboxes = gt_bboxes[..., 0, :].reshape((-1, 4))
+                    gt_cls = gt_cls[..., 0].reshape(-1)
+                    gt_conf = gt_conf[..., 0].reshape(-1)
 
                     mask_obj = gt_conf > 0
                     gt_bboxes = gt_bboxes[mask_obj]
                     gt_conf = gt_conf[mask_obj]
                     gt_cls = gt_cls[mask_obj]
                     
-                    pred_bboxes = pred_bboxes
                     pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(
                         pred_bboxes,
                         pred_conf,
                         pred_cls,
-                        cfg["iou_thresh"],
-                        cfg["conf_thresh"])
+                        self.iou_thresh,
+                        self.conf_thresh)
                     
                     self.cal_mAP(
                         map_mt,
@@ -101,13 +110,9 @@ class VocEval:
         metrics["eval_map_50"].update(mAP["map_50"])
         metrics["eval_map_75"].update(mAP["map_75"])
         
-        logger.info(f'box_loss: {metrics["eval_box_loss"].get_value("mean"):.5f}, \
-            conf_loss: {metrics["eval_conf_loss"].get_value("mean"):.5f}, \
-            cls_loss: {metrics["eval_cls_loss"].get_value("mean"):.5f}')
-
-        logger.info(f'mAP: {metrics["eval_map"].get_value("mean"):.5f}, \
-            mAP_50: {metrics["eval_map_50"].get_value("mean"):.5f}, \
-            mAP_75: {metrics["eval_map_75"].get_value("mean"):.5f}')
+        logger.info(f'box_loss: {metrics["eval_box_loss"].get_value("mean"):.3f}, conf_loss: {metrics["eval_conf_loss"].get_value("mean"):.3f}, cls_loss: {metrics["eval_cls_loss"].get_value("mean"):.3f}')
+        
+        logger.info(f'mAP: {metrics["eval_map"].get_value("mean"):.3f}, mAP_50: {metrics["eval_map_50"].get_value("mean"):.3f}, mAP_75: {metrics["eval_map_75"].get_value("mean"):.3f}')
 
         return metrics
     
@@ -122,6 +127,10 @@ def cli():
                         help='Batch size valid dataset')
     parser.add_argument('--n_workers', type=int, default=cfg['n_workers'],
                         help='Number of workers')
+    parser.add_argument('--conf_thresh', type=float, default=cfg['conf_thresh'],
+                        help='Confidence threshold')
+    parser.add_argument('--iou_thresh', type=float, default=cfg['iou_thresh'],
+                        help='iou threshold')
     
     args = parser.parse_args()
     return args
@@ -142,5 +151,5 @@ if __name__ == "__main__":
     ckpt_path = os.path.join(cfg['ckpt_dirpath'], args.model_type, args.weight_type)
     ckpt = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(ckpt["model"])
-    eval = VocEval(dataset, model, args.bz_eval, False, args.n_workers, False)
+    eval = VocEval(dataset, model, args.bz_eval, False, args.n_workers, False, args.iou_thresh, args.conf_thresh)
     eval.evaluate()

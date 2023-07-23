@@ -28,9 +28,9 @@
 "bz_train": 24
 "bz_valid": 8
 "n_workers": 8
-"iou_thresh": 0.6
-"conf_thresh": 0.25
-"apply_IoU": "DIoU"
+"iou_thresh": 0.7
+"conf_thresh": 0.1
+"apply_IoU": "GIoU"
 
 ########################### Debugging ######################
 "tensorboard_debug": "exps/tensorboard"
