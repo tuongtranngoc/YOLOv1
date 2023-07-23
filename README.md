@@ -18,12 +18,12 @@ YOLOv1 is new approach to object detection as a regression problem to spatially 
 
 ## Experiment Table
 
-| Backbone | Dataset | Training dataset | Valid dataset | Image size | mAP | mAP_50 | mAP_75 | Files |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|Original paper|PASCAL VOC|trainval 2007+2012|test2007|448x448|--|63.4|--|--|
-|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.39|0.62|0.41|--|
-|ResNet34 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.41|0.65|0.43|--|
-|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.43|0.67|0.45|--|
+| Backbone | Dataset | Training dataset | Valid dataset | Image size | mAP | mAP_50 | mAP_75 |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|Original paper|PASCAL VOC|trainval 2007+2012|test2007|448x448|--|63.4|--|
+|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.39|0.62|0.41|
+|ResNet34 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.41|0.65|0.43|
+|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.43|0.67|0.45|
 
 ## Dataset
 + Download Pascal VOC train+val 2012+2007
@@ -58,4 +58,9 @@ python -m src.train --model_type resnet18/resnet34/resnet50 --resume resume_most
 ### Evaluate
 ```shell
 python -m src.eval --model_type resnet18/resnet34/resnet50 --weight_type path_to_weight_best.pt
+```
+
+### Prediction
+```shell
+python -m src.predict --model_type resnet18/resnet34/resnet50 --weight_path path_to_weight_best.pt --input_folder path_input_folder --output_folder path_to_output_folder --conf_thresh confidence_threshold --iou_thresh iou threshold 
 ```
