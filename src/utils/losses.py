@@ -57,10 +57,11 @@ class SumSquaredError(nn.Module):
             else:
                 raise Exception("If using apply_IoU, Please use one of following loss functions: GIoU, DIoU")
             box_loss = box_loss[one_obj_ij].mean()
-            self.lambda_coord = 1
+            self.lambda_coord = 1.0
+            self.lambda_noobj = 1.0
         else:
             box_loss = self.bbox_loss(pred_bboxes[one_obj_ij], gt_bboxes[one_obj_ij])
-
+        
         obj_loss = self.conf_loss(pred_conf[..., 0][one_obj_ij], gt_conf[..., 0][one_obj_ij])
 
         noobj_loss = self.conf_loss(pred_conf[..., 0][one_noobj_ij], gt_conf[..., 0][one_noobj_ij])

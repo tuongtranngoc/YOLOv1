@@ -3,50 +3,30 @@ import json
 
 import cv2
 import torch
+import random
 from ..data.utils import *
 from .torch_utils import *
-from ..data import CFG as cfg
-
-
-def class2color(class_name):
-    VOC_CLASS2COLOR = {
-        'aeroplane': (128, 0, 0),
-        'bicycle': (0, 128, 0),
-        'bird': (128, 128, 0),
-        'boat': (0, 0, 128),
-        'bottle': (128, 0, 128),
-        'bus': (0, 128, 128),
-        'car': (128, 0, 128),
-        'cat': (355, 255, 0),
-        'chair': (192, 0, 0),
-        'cow': (64, 128, 0),
-        'diningtable': (192, 128, 0),
-        'dog': (64, 0, 128),
-        'horse': (192, 0, 128),
-        'motorbike': (64, 128, 128),
-        'person': (222, 222, 222),
-        'pottedplant': (0, 64, 0),
-        'sheep': (128, 64, 0),
-        'sofa': (0, 192, 0),
-        'train': (128, 192, 0),
-        'tvmonitor': (0, 64, 128),
-        'background' : (128, 128, 128),
-        'groundtruth': (0, 0, 255)
-    }
-    return VOC_CLASS2COLOR[class_name]
+from ..data import CFG as cf
 
 
 class Drawer:
     def __init__(self, image, is_impt=True, type_label='gt') -> None:
-        id_map = json.load(open(cfg['VOC']['label2id']))
+        self.id_map = json.load(open(cfg['VOC']['label2id']))
         self.id2classes = {
-            id_map[k]: k
-            for k in id_map.keys()
+            self.id_map[k]: k
+            for k in self.id_map.keys()
         }
         self.is_impt = is_impt
         self.type_label = type_label
         self.image = image
         self.lw = 1
+
+    def class2color(self, class_name):
+        colors = {
+            k: (random.random(0, 255) for _ in range(3))
+            for k in self.id_map.keys()
+        }
+        return colors
 
     def unnormalize_bboxes(self, bbox:list):
         return [b * cfg['image_size'][0] for b in bbox]
@@ -56,11 +36,11 @@ class Drawer:
         _label = self.id2classes[label+1]
     
         if self.type_label == 'gt': 
-            color = class2color('groundtruth')
+            color = self.class2color('groundtruth')
             _text = _label
         else:
             _text = _label + '-' + str(round(conf, 3))
-            color = class2color(_label) if self.is_impt else class2color('background')
+            color = self.class2color(_label) if self.is_impt else self.class2color('background')
 
         cv2.rectangle(self.image, \
                     (int(_bbox[0]), int(_bbox[1])), \
