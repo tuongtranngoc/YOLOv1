@@ -16,16 +16,19 @@ class Drawer:
             self.id_map[k]: k
             for k in self.id_map.keys()
         }
+        self.lw = 1
+        self.image = image
         self.is_impt = is_impt
         self.type_label = type_label
-        self.image = image
-        self.lw = 1
+        self.colors = self.class2color()
 
-    def class2color(self, class_name):
+    def class2color(self):
         colors = {
-            k: (random.random(0, 255) for _ in range(3))
+            k: tuple([random.randint(0, 255) for _ in range(3)])
             for k in self.id_map.keys()
         }
+        colors['groundtruth'] = (255, 0, 0)
+        colors['background'] = (128, 128, 128)
         return colors
 
     def unnormalize_bboxes(self, bbox:list):
@@ -36,11 +39,11 @@ class Drawer:
         _label = self.id2classes[label+1]
     
         if self.type_label == 'gt': 
-            color = self.class2color('groundtruth')
+            color = self.colors['groundtruth']
             _text = _label
         else:
             _text = _label + '-' + str(round(conf, 3))
-            color = self.class2color(_label) if self.is_impt else self.class2color('background')
+            color = self.colors[_label] if self.is_impt else self.colors['background']
 
         cv2.rectangle(self.image, \
                     (int(_bbox[0]), int(_bbox[1])), \
@@ -94,10 +97,6 @@ class Debuger:
                                                                 pred_conf, 
                                                                 pred_cls, 
                                                                 iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
-                gt_bboxes, gt_conf, gt_cls = BoxUtils.nms(gt_bboxes, 
-                                                          gt_conf, 
-                                                          pred_cls, 
-                                                          iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
 
             gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
             pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)
