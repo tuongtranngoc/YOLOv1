@@ -10,16 +10,13 @@ from ..data import CFG as cf
 
 
 class Drawer:
-    def __init__(self, image, is_impt=True, type_label='gt') -> None:
+    def __init__(self) -> None:
         self.id_map = json.load(open(cfg['VOC']['label2id']))
         self.id2classes = {
             self.id_map[k]: k
             for k in self.id_map.keys()
         }
         self.lw = 1
-        self.image = image
-        self.is_impt = is_impt
-        self.type_label = type_label
         self.colors = self.class2color()
 
     def class2color(self):
@@ -34,25 +31,28 @@ class Drawer:
     def unnormalize_bboxes(self, bbox:list):
         return [b * cfg['image_size'][0] for b in bbox]
 
-    def draw_box_label(self, bbox, conf, label):
+    def draw_box_label(self, image, bbox, conf, label, type_label=None):
         _bbox = self.unnormalize_bboxes(bbox)
         _label = self.id2classes[label+1]
     
-        if self.type_label == 'gt': 
+        if type_label == 'gt': 
             color = self.colors['groundtruth']
             _text = _label
+        elif type_label == 'pred':
+            _text = _label + '-' + str(round(conf, 3))
+            color = self.colors[_label]
         else:
             _text = _label + '-' + str(round(conf, 3))
-            color = self.colors[_label] if self.is_impt else self.colors['background']
+            color = self.colors['background']
 
-        cv2.rectangle(self.image, \
-                    (int(_bbox[0]), int(_bbox[1])), \
-                    (int(_bbox[2]), int(_bbox[3])), \
-                    color=color, \
-                    thickness=1, \
+        cv2.rectangle(image,
+                    (int(_bbox[0]), int(_bbox[1])),
+                    (int(_bbox[2]), int(_bbox[3])),
+                    color=color,
+                    thickness=1,
                     lineType=cv2.LINE_AA)
 
-        cv2.putText(self.image,
+        cv2.putText(image,
                     _text,
                     (int(_bbox[0]), int(_bbox[1]+0.025*cfg['image_size'][0])),
                     0,
@@ -61,7 +61,7 @@ class Drawer:
                     thickness=self.lw,
                     lineType=cv2.LINE_AA)
         
-        return self.image
+        return image
 
 
 class Debuger:
@@ -69,7 +69,6 @@ class Debuger:
         self.S = cfg['S']
         self.B = cfg['B']
         self.C = cfg['C']
-        self.cfg = cfg
         self.save_debug_path = save_debug_path
 
     def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, apply_mns=True):
@@ -114,7 +113,8 @@ class Vizualization:
     C = cfg['C']
     save_debug_path = cfg['prediction_debug']
     os.makedirs(save_debug_path, exist_ok=True)
-
+    drawer = Drawer()
+    
     @classmethod
     def reshape_data(cls, out):
         pred_bboxes = out[..., :8]
@@ -142,5 +142,5 @@ class Vizualization:
         bboxes, confs, classes = cls.label2numpy(bboxes, confs, classes)
         for bbox, conf, label in zip(bboxes, confs, classes):
             if conf >= conf_thresh:
-                image = Drawer(image, True, type_draw).draw_box_label(bbox, conf, label)
+                image = cls.drawer.draw_box_label(image, bbox, conf, label, type_draw)
         return image
