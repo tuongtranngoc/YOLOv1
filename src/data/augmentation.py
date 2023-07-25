@@ -10,31 +10,6 @@ import albumentations as A
 from .utils import *
 
 
-class Translation:
-    def __init__(self, ratio_shift) -> None:
-        self.ratio_shift = ratio_shift
-
-    def __call__(self, image, bboxes, p):
-        if np.random.uniform() < p:
-            bboxes = bboxes.copy()
-            
-            image = image.copy()
-            h, w = image.shape[:2]
-            shift_x = np.random.uniform(-self.ratio_shift, self.ratio_shift)
-            shift_y = np.random.uniform(-self.ratio_shift, self.ratio_shift)
-            trans_matrix = np.array([
-                [1, 0, shift_x*w],
-                [0, 1, shift_y*h]],
-                np.float32
-            )
-            image = cv2.warpAffine(image, trans_matrix, (w, h), borderValue=(128,128,128))
-            bboxes[:, :2] += [shift_x*w, shift_y*h]
-            bboxes[:, 2:] += [shift_x*w, shift_y*h]
-            bboxes[:, :2] = np.maximum([2, 2], bboxes[:, :2])
-            bboxes[:, 2:] = np.minimum([w-2, h-2], bboxes[:, 2:])
-        return image, bboxes
-    
-
 class AlbumAug:
     def __init__(self) -> None:
         self.transform = A.Compose([
@@ -43,6 +18,7 @@ class AlbumAug:
             A.Affine(p=0.3, rotate=15),
             A.ShiftScaleRotate(p=0.2, rotate_limit=15),
             A.Blur(p=0.01),
+            A.Flip(p=0.5)
             # A.MedianBlur(p=0.01),
             # A.ToGray(p=0.01),
             # A.RandomBrightnessContrast(p=0.3),

@@ -16,11 +16,11 @@ import torch.nn.functional as F
 class YoloDatset(BaseDatset):
     def __init__(self, image_path, label_path, txt_path, is_augment=False) -> None:
         self.cfg = CFG
+        self.aug = AlbumAug()
+        self.txt_path = txt_path
         self.image_path = image_path    
         self.label_path = label_path
         self.is_augment = is_augment
-        self.txt_path = txt_path
-        self.aug = AlbumAug()
         self.image_size = self.cfg['image_size']
         self.tranform = Transform(self.image_size)
         self.dataset_voc = self.load_dataset_voc_format(self.image_path, self.label_path, self.txt_path)
