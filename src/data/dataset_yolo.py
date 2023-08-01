@@ -26,10 +26,10 @@ class YoloDatset(BaseDatset):
         self.dataset_voc = self.load_dataset_voc_format(self.image_path, self.label_path, self.txt_path)
     
     def get_image_label(self, image_pth, bboxes, labels):
-        image = cv2.imread(image_pth).astype(np.float32)
+        image = cv2.imread(image_pth)
         if self.is_augment:
             image, bboxes, labels = self.aug(image, bboxes, labels)
-        
+
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image, bboxes, labels = self.tranform(image, bboxes, labels)
         return image, bboxes, labels
