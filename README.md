@@ -21,9 +21,8 @@ YOLOv1 is new approach to object detection as a regression problem to spatially 
 | Backbone | Dataset | Training dataset | Valid dataset | Image size | mAP | mAP_50 | mAP_75 |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |Original paper|PASCAL VOC|trainval 2007+2012|test2007|448x448|--|0.63|--|
-|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.40|0.63|0.41|
-|ResNet34 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.41|0.65|0.43|
-|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.44|0.68|0.48|
+|ResNet18 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.41|0.64|0.44|
+|ResNet50 + GIoU loss|PASCAL VOC|trainval 2007+2012|test2007|448x448|0.46|0.69|0.49|
 
 ## Dataset
 + Download Pascal VOC train+val 2012+2007
