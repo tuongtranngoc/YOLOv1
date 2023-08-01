@@ -9,6 +9,7 @@ from ..data.utils import Unnormalize
 
 
 class IoULoss:
+    
     @classmethod
     def compute_iou(cls, target, pred):
         # eps = 1e-6
@@ -41,7 +42,7 @@ class IoULoss:
         cx2 = torch.max(x[..., 2], y[..., 2])
         cy2 = torch.max(x[..., 3], y[..., 3])
         c_intersects = (cx2-cx1) * (cy2-cy1)
-
+    
         return intersects - (c_intersects - unions) / c_intersects
 
     @classmethod
@@ -72,6 +73,7 @@ class BoxUtils:
     B = cfg['B']
     C = cfg['C']
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     @classmethod
     def decode_yolo(cls, bboxes):
         bz = bboxes.size(0)
@@ -86,7 +88,7 @@ class BoxUtils:
         y1 = torch.clamp(yc - bboxes[..., 3] **2 / 2, min=0)
         x2 = torch.clamp(xc + bboxes[..., 2] **2 / 2, max=1)
         y2 = torch.clamp(yc + bboxes[..., 3] **2 / 2, max=1)
-
+        
         return torch.stack((x1, y1, x2, y2) ,dim=-1)
     
     @classmethod
@@ -108,7 +110,9 @@ class BoxUtils:
     @classmethod
     def image_to_numpy(cls, image):
         if isinstance(image, torch.Tensor):
-            image = image.squeeze().detach().cpu().numpy()
+            if image.dim() > 3:
+                image = image.squeeze()
+            image = image.detach().cpu().numpy()
             image = image.transpose((1, 2, 0))
             image = Unnormalize()(image)
             image = np.ascontiguousarray(image, np.uint8)

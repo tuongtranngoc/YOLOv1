@@ -43,4 +43,5 @@ class Unnormalize:
     def __call__(self, image):
         image *= (self.std * 255.)
         image += (self.mean * 255.)
+        image = np.clip(image, 0, 255).astype(np.float32)
         return image

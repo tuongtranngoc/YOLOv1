@@ -38,6 +38,7 @@
 "training_debug": "exps/training"
 "dataset_debug": "exps/dataset"
 "valid_debug": "exps/valid"
+"test_cases": "exps/test_cases"
 "prediction_debug": "exps/prediction"
 "ckpt_dirpath": "src/weights"
 "conf_debug": 0.3
