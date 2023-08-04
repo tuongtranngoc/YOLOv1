@@ -1,10 +1,10 @@
 import os
 import torch
-from ..config import CFG as cfg
+from ..utils import cfg
 from torch.utils.tensorboard import SummaryWriter
 
 class Tensorboard:
-    outdir = cfg['tensorboard_debug']
+    outdir = cfg.debugging.tensorboard_debug
     writer = SummaryWriter(outdir)
     
     @classmethod

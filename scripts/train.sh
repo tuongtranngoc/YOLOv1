@@ -1,1 +1,1 @@
-python -m src.train --resume --model_type resnet50
+CUDA_VISIBLE_DEVICES=0 python -m src.train --model_type resnet50

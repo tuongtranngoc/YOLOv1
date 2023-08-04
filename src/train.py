@@ -6,7 +6,7 @@ import torch
 import argparse
 from torch.utils.data import DataLoader
 
-from src import CFG
+from . import cfg
 from src.eval import VocEval
 from src.utils.visualization import *
 
@@ -27,53 +27,52 @@ class Trainer:
         super().__init__()
         self.args = args
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.cfg = CFG
         self.best_map = 0.0
         self.start_epoch = 1
         self.create_model()
         self.create_dataloader()
-        self.debuger = Debuger(self.cfg["training_debug"])
+        self.debuger = Debuger(cfg.debugging.training_debug)
         self.eval = VocEval(
             self.val_dataset,
             self.model,
-            self.cfg["bz_valid"],
+            cfg.trainval.bz_valid,
             False,
-            self.cfg["n_workers"],
+            cfg.trainval.n_workers,
             False,
-            self.cfg['iou_thresh'],
-            self.cfg['conf_thresh'])
+            cfg.trainval.iou_thresh,
+            cfg.trainval.conf_thresh)
 
     def create_dataloader(self):
         self.train_dataset = YoloDatset(
-            self.cfg["VOC"]["image_path"],
-            self.cfg["VOC"]["anno_path"],
-            self.cfg["VOC"]["txt_train_path"],
+            cfg.dataset.image_path,
+            cfg.dataset.anno_path,
+            cfg.dataset.txt_train_path,
             is_augment=True)
         self.val_dataset = YoloDatset(
-            self.cfg["VOC"]["image_path"],
-            self.cfg["VOC"]["anno_path"],
-            self.cfg["VOC"]["txt_val_path"])
+            cfg.dataset.image_path,
+            cfg.dataset.anno_path,
+            cfg.dataset.txt_val_path)
         self.train_loader = DataLoader(
             self.train_dataset,
-            batch_size=self.cfg["bz_train"],
+            batch_size=cfg.trainval.bz_train,
             shuffle=True,
-            num_workers=self.cfg["n_workers"],
+            num_workers=cfg.trainval.n_workers,
             pin_memory=False)
 
     def create_model(self):
         self.model = YoloModel(
-            input_size=self.cfg["image_size"][0],
+            input_size=cfg.models.image_size[0],
             backbone=self.args.model_type,
-            num_classes=self.cfg["C"],
+            num_classes=cfg.models.num_classes,
             pretrained=True,).to(self.device)
-        self.loss_fn = SumSquaredError(apply_IoU=self.cfg["apply_IoU"]).to(self.device)
+        self.loss_fn = SumSquaredError(apply_IoU=cfg.trainval.apply_iou).to(self.device)
         #self.optimizer = torch.optim.SGD(self.model.parameters(), momentum=0.9, weight_decay=5e-4, lr=1e-3)
         #self.lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [90, 120], gamma=0.1)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4, amsgrad=True)
         
         if self.args.resume:
             logger.info("Resuming training ...")
-            last_ckpt = os.path.join(cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')
+            last_ckpt = os.path.join(cfg.debugging.ckpt_dirpath, self.args.model_type, 'last.pt')
             if os.path.exists(last_ckpt):
                 ckpt = torch.load(last_ckpt, map_location=self.device)
                 self.start_epoch = self.resume_training(ckpt)
@@ -81,7 +80,7 @@ class Trainer:
                 
 
     def train(self):
-        for epoch in range(self.start_epoch, self.cfg["epochs"]):
+        for epoch in range(self.start_epoch, cfg.trainval.epochs):
             mt_box_loss = BatchMeter()
             mt_conf_loss = BatchMeter()
             mt_cls_loss = BatchMeter()
@@ -115,7 +114,7 @@ class Trainer:
 
             logger.info(f"Epoch: {epoch} - box_loss: {mt_box_loss.get_value('mean'): .5f}, conf_loss: {mt_conf_loss.get_value('mean'): .5f}, class_loss: {mt_cls_loss.get_value('mean'): .5f}")
 
-            if epoch % self.cfg["eval_step"] == 0:
+            if epoch % cfg.trainval.eval_step == 0:
                 metrics = self.eval.evaluate()
                 Tensorboard.add_scalars(
                     "eval_loss",
@@ -133,30 +132,30 @@ class Trainer:
 
                 if metrics["eval_map_50"].get_value("mean") > self.best_map:
                     self.best_map = metrics["eval_map_50"].get_value("mean")
-                    best_ckpt = os.path.join(self.cfg['ckpt_dirpath'], self.args.model_type, 'best.pt')
+                    best_ckpt = os.path.join(cfg.debugging.ckpt_dirpath, self.args.model_type, 'best.pt')
                     self.save_ckpt(best_ckpt, self.best_map, epoch)
 
-            last_ckpt = os.path.join(self.cfg['ckpt_dirpath'], self.args.model_type, 'last.pt')
+            last_ckpt = os.path.join(cfg.debugging.ckpt_dirpath, self.args.model_type, 'last.pt')
             self.save_ckpt(last_ckpt, self.best_map, epoch)
 
             # Debug image at each training time
             with torch.no_grad():
                 self.debuger.debug_output(
                     self.train_dataset,
-                    self.cfg["idxs_debug"],
+                    cfg.debugging.idxs_debug,
                     self.model,
                     "train",
                     self.device,
-                    self.cfg["conf_debug"],
+                    cfg.debugging.conf_debug,
                     True,
                 )
                 self.debuger.debug_output(
                     self.val_dataset,
-                    self.cfg["idxs_debug"],
+                    cfg.debugging.idxs_debug,
                     self.model,
                     "val",
                     self.device,
-                    self.cfg["conf_debug"],
+                    cfg.debugging.conf_debug,
                     True,
                 )
 

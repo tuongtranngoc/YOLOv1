@@ -6,7 +6,7 @@ import os
 import argparse
 from tqdm import tqdm
 
-from .config import CFG as cfg
+from . import cfg
 from .utils.visualization import *
 from .models.modules.yolo import YoloModel
 
@@ -16,18 +16,18 @@ class Predictor:
         self.args = args
         self.transform = A.Compose(
             [
-                A.Resize(cfg["image_size"][0], cfg["image_size"][1]),
+                A.Resize(cfg.models.image_size[0], cfg.models.image_size[1]),
                 A.Normalize(),
                 ToTensorV2(),
             ])
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = YoloModel(
-            input_size=cfg["image_size"][0],
+            input_size=cfg.models.image_size[0],
             backbone=self.args.model_type,
-            num_classes=cfg["C"],
+            num_classes=cfg.models.num_classes,
             pretrained=False).to(self.device)
         self.model = self.load_weight(self.model, self.args.weight_path)
-    
+        
     def predict(self, image_pth):
         image = cv2.imread(image_pth)
         image = self._tranform(image)
@@ -40,8 +40,8 @@ class Predictor:
             pred_bboxes, pred_conf, pred_cls = Vizualization.reshape_data(out)
             pred_bboxes, pred_conf, pred_cls = pred_bboxes.reshape((-1, 4)), pred_conf.reshape(-1), pred_cls.reshape(-1)
             pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, pred_conf, pred_cls, self.args.iou_thresh, self.args.conf_thresh)
-            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg['conf_thresh'])
-            cv2.imwrite(f'{cfg["prediction_debug"]}/{os.path.basename(image_pth)}', image)
+            image = Vizualization.draw_debug(image, pred_bboxes, pred_conf, pred_cls, cfg.trainval.conf_thresh)
+            cv2.imwrite(f'{cfg.debugging.prediction_debug}/{os.path.basename(image_pth)}', image)
 
     def _tranform(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -67,9 +67,9 @@ def cli():
                         help='Path to input images')
     parser.add_argument('--output_folder', type=str,
                         help='Path to predicted output')
-    parser.add_argument('--conf_thresh', type=float, default=cfg['conf_thresh'],
+    parser.add_argument('--conf_thresh', type=float, default=cfg.trainval.conf_thresh,
                         help='Confidence threshold for nms')
-    parser.add_argument('--iou_thresh', type=float, default=cfg['iou_thresh'],
+    parser.add_argument('--iou_thresh', type=float, default=cfg.trainval.iou_thresh,
                         help='IoU threshold for nms')
 
     args = parser.parse_args()

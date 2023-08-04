@@ -6,12 +6,11 @@ import torch
 import random
 from ..data.utils import *
 from .torch_utils import *
-from ..data import CFG as cf
 
 
 class Drawer:
     def __init__(self) -> None:
-        self.id_map = json.load(open(cfg['VOC']['label2id']))
+        self.id_map = json.load(open(cfg.dataset.label2id))
         self.id2classes = {
             self.id_map[k]: k
             for k in self.id_map.keys()
@@ -29,7 +28,7 @@ class Drawer:
         return colors
 
     def unnormalize_bboxes(self, bbox:list):
-        return [b * cfg['image_size'][0] for b in bbox]
+        return [b * cfg.models.image_size[0] for b in bbox]
 
     def draw_box_label(self, image, bbox, conf, label, type_label=None):
         _bbox = self.unnormalize_bboxes(bbox)
@@ -54,7 +53,7 @@ class Drawer:
 
         cv2.putText(image,
                     _text,
-                    (int(_bbox[0]), int(_bbox[1]+0.025*cfg['image_size'][0])),
+                    (int(_bbox[0]), int(_bbox[1]+0.025*cfg.models.image_size[0])),
                     0,
                     self.lw / 3,
                     color=color,
@@ -66,9 +65,9 @@ class Drawer:
 
 class Debuger:
     def __init__(self, save_debug_path) -> None:
-        self.S = cfg['S']
-        self.B = cfg['B']
-        self.C = cfg['C']
+        self.S = cfg.models.grid_size
+        self.B = cfg.models.num_bboxes
+        self.C = cfg.models.num_classes
         self.save_debug_path = save_debug_path
 
     def debug_output(self, dataset, idxs, model, type_infer, device, conf_thresh, apply_mns=True):
@@ -95,7 +94,7 @@ class Debuger:
                 pred_bboxes, pred_conf, pred_cls = BoxUtils.nms(pred_bboxes, 
                                                                 pred_conf, 
                                                                 pred_cls, 
-                                                                iou_thresh=cfg['iou_thresh'], conf_thresh=cfg['conf_thresh'])
+                                                                iou_thresh=cfg.models.iou_thresh, conf_thresh=cfg.models.conf_thresh)
 
             gt_bboxes, gt_conf, gt_cls = Vizualization.label2numpy(gt_bboxes, gt_conf, gt_cls)
             pred_bboxes, pred_conf, pred_cls = Vizualization.label2numpy(pred_bboxes, pred_conf, pred_cls)
@@ -108,10 +107,10 @@ class Debuger:
 
 
 class Vizualization:
-    S = cfg['S']
-    B = cfg['B']
-    C = cfg['C']
-    save_debug_path = cfg['prediction_debug']
+    S = cfg.models.grid_size
+    B = cfg.models.num_bboxes
+    C = cfg.models.num_classes
+    save_debug_path = cfg.debugging.prediction_debug
     os.makedirs(save_debug_path, exist_ok=True)
     drawer = Drawer()
     

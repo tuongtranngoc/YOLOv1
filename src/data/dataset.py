@@ -5,7 +5,7 @@ import glob
 import xmltodict
 from .utils import *
 from tqdm import tqdm
-from ..config import CFG as cfg
+from ..config.configs import Configuration as cfg
 from easydict import EasyDict
 from collections import defaultdict
 from torch.utils.data import Dataset
@@ -57,7 +57,7 @@ class BaseDatset(Dataset):
     def load_dataset_voc_format(self, image_dirs, anno_dirs, txt_files):
         logger.info(f'Loading voc dataset from {txt_files}')
         dataset = []
-        id_map = json.load(open(cfg['VOC']['label2id']))
+        id_map = json.load(open(cfg.dataset.label2id))
         if len(txt_files) > 0:
             for txt_file in txt_files:
                 image_ids = []
