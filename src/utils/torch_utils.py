@@ -4,7 +4,7 @@ import torch
 import torchvision
 import numpy as np
 
-from ..config import CFG as cfg
+from ..utils import cfg
 from ..data.utils import Unnormalize
 
 
@@ -69,9 +69,9 @@ class IoULoss:
 
 
 class BoxUtils:
-    S = cfg['S']
-    B = cfg['B']
-    C = cfg['C']
+    S = cfg.models.grid_size
+    B = cfg.models.num_bboxes
+    C = cfg.models.num_classes
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     @classmethod

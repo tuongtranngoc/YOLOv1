@@ -3,7 +3,7 @@ import torch
 import argparse
 from tqdm import tqdm
 
-from .config import CFG
+from . import cfg
 from .utils.torch_utils import *
 from .utils.metrics import BatchMeter
 from .data.dataset_yolo import YoloDatset
@@ -21,7 +21,6 @@ class VocEval:
     def __init__(self, dataset, model, bz, shuffle, num_workers, pin_men, iou_thresh, conf_thresh):
         super().__init__()
         self.bz = bz
-        self.cfg = CFG
         self.model = model
         self.dataset = dataset
         self.shuffle = shuffle
@@ -31,7 +30,7 @@ class VocEval:
         self.conf_thresh = conf_thresh
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        self.loss_fn = SumSquaredError(apply_IoU=self.cfg["apply_IoU"]).to(self.device)
+        self.loss_fn = SumSquaredError(apply_IoU=cfg.trainval.apply_iou).to(self.device)
         self.dataloader = DataLoader(
             self.dataset,
             self.bz,
@@ -46,7 +45,7 @@ class VocEval:
         target = [{"boxes": gt_bbox, "scores": gt_conf, "labels": gt_cls}]
 
         map_mt.update(preds, target)
-
+    
     def evaluate(self):
         metrics = {
             "eval_box_loss": BatchMeter(),
@@ -123,13 +122,13 @@ def cli():
                         help='weight type: best.pt/last.pt')
     parser.add_argument('--model_type', type=str, default='resnet34',
                         help='Model selection contain: vgg16, vgg16-bn, resnet18, resnet34, resnet50')
-    parser.add_argument('--bz_eval', type=int, default=cfg['bz_valid'],
+    parser.add_argument('--bz_eval', type=int, default=cfg.trainval.bz_valid,
                         help='Batch size valid dataset')
-    parser.add_argument('--n_workers', type=int, default=cfg['n_workers'],
+    parser.add_argument('--n_workers', type=int, default=cfg.trainval.n_workers,
                         help='Number of workers')
-    parser.add_argument('--conf_thresh', type=float, default=cfg['conf_thresh'],
+    parser.add_argument('--conf_thresh', type=float, default=cfg.trainval.conf_thresh,
                         help='Confidence threshold')
-    parser.add_argument('--iou_thresh', type=float, default=cfg['iou_thresh'],
+    parser.add_argument('--iou_thresh', type=float, default=cfg.trainval.iou_thresh,
                         help='iou threshold')
     
     args = parser.parse_args()
@@ -140,15 +139,15 @@ if __name__ == "__main__":
     args = cli()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dataset = YoloDatset(
-            cfg["VOC"]["image_path"],
-            cfg["VOC"]["anno_path"],
-            cfg["VOC"]["txt_val_path"])
+            cfg.dataset.image_path,
+            cfg.dataset.anno_path,
+            cfg.dataset.txt_val_path)
     model = YoloModel(
-            input_size=cfg["image_size"][0],
+            input_size=cfg.models.image_size[0],
             backbone=args.model_type,
-            num_classes=cfg["C"],
+            num_classes=cfg.models.num_classes,
             pretrained=False).to(device)
-    ckpt_path = os.path.join(cfg['ckpt_dirpath'], args.model_type, args.weight_type)
+    ckpt_path = os.path.join(cfg.debugging.ckpt_dirpath, args.model_type, args.weight_type)
     ckpt = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(ckpt["model"])
     eval = VocEval(dataset, model, args.bz_eval, False, args.n_workers, False, args.iou_thresh, args.conf_thresh)

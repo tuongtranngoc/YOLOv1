@@ -7,14 +7,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..data import CFG
+from ..utils import cfg
 from .torch_utils import *
 
 
 class SumSquaredError(nn.Module):
     def __init__(self, lambda_coord=5.0, lambda_noobj=0.5, apply_IoU=None) -> None:
         super(SumSquaredError, self).__init__()
-        self.cfg = CFG
         self.apply_IoU = apply_IoU
         self.cls_loss = nn.MSELoss()
         self.bbox_loss = nn.MSELoss()
